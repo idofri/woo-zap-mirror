@@ -1,0 +1,99 @@
+#wc-zap-checkbox {
+	margin:0;
+	display:inline-block;
+	border-left:1px solid #eee;
+	padding:0 0 0 12px;
+	margin:0 0 0 12px;
+}
+	body.rtl #wc-zap-checkbox {
+		border-left:none;
+		border-right:1px solid #eee;
+		padding:0 12px 0 0;
+		margin:0 12px 0 0;
+	}
+#wc-zap-options {
+	pointer-events: auto;
+	opacity:1;
+}
+#wc-zap-options.disabled {
+	pointer-events: none;
+	opacity:0.3;
+}
+#wc-zap-options .howto {
+	margin:0;
+}
+.wc_zap_input {
+	width:100%;
+	
+}
+	input.wc_zap_input {
+		min-height:28px;
+		margin:0;
+	}
+#wc-zap-options > .wc-zap-row {
+	width:100%;
+	margin:10px 0;
+	box-sizing: border-box;
+	border-bottom:1px solid #eee;
+	padding:0 0 10px;
+}
+	#wc-zap-options > .wc-zap-row:last-of-type {
+		border-bottom:none;
+	}
+.wc-zap-row-label, .wc-zap-row-input {
+	display:inline-block;
+	vertical-align:middle;
+	position:relative;
+}
+	#wc-zap-options > .wc-zap-row > div.wc-zap-valign-top {
+		vertical-align:top;
+	}
+#wc-zap-options > .wc-zap-row > .wc-zap-row-label {
+	width:25%;
+}
+	#wc-zap-options > .wc-zap-row > .wc-zap-row-label > strong {
+		padding-right:2px;
+	}
+	body.rtl #wc-zap-options > .wc-zap-row > .wc-zap-row-label > strong {
+		padding-left:2px;
+		padding-right:0;
+	}
+#wc-zap-options > .wc-zap-row > .wc-zap-row-input {
+	width:75%;
+}
+
+/* options page */
+#wc-zap-settings .inside {
+	padding: 0 12px 0;
+}
+#wc-zap-settings .tabs-panel {
+	max-height:500px;
+}
+.wc-zap-setting {
+	margin:1em 0;
+}
+	.wc-zap-setting .wc-zap-row-label {
+		padding:0 10px 0 0;
+	}
+	body.rtl .wc-zap-setting .wc-zap-row-label {
+		padding:0 0 0 10px;
+	}
+#wc-zap-placeholder {
+	color: #32373c;
+	font-size:14px;
+	line-height:28px;
+	padding-left:5px;
+	left: 0px;
+	cursor:default;
+	direction:ltr;
+	text-align:left;
+}
+#wc-zap-mirror-url {
+	color:#0073aa;
+	cursor:default;
+	direction:ltr;
+	text-align:left;
+}
+#wc-zap-product-image {
+	max-width:150px;
+}
