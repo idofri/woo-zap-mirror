@@ -1,4 +1,6 @@
 <?php
+defined( 'ABSPATH' ) || exit; // Exit if accessed directly
+
 /*
 Plugin Name: Woo Zap Mirror
 Plugin URI:  https://wordpress.org/plugins/woo-zap-mirror/
@@ -9,152 +11,206 @@ Author URI:  https://profiles.wordpress.org/idofri/
 Text Domain: woo-zap-mirror
 */
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
-
-/**
- * Zap Mirror site for WooCommerce
- */
-class WC_Zap_Mirror {
+/** @class WC_Zap_Mirror */
+final class WC_Zap_Mirror {
 	
-	public static $info;
-	public static $slug;
+	/** The single instance of the class. */
+	protected static $_instance = null;
 	
 	/**
-	 * Constructor: setups filters and actions
+	 * Notices (array)
+	 * @var array
 	 */
-	public function __construct() {
-		
-		/**
-		 * Localization
-		 */
-		$this->localization();
-		
-		/**
-		 * Filters
-		 */
+	public $notices = array();
+	
+	/**
+	 * Throw error on object clone.
+	 *
+	 * The whole idea of the singleton design pattern is that there is a single
+	 * object therefore, we don't want the object to be cloned.
+	 *
+	 * @since 1.3.0
+	 * @return void
+	 */
+	public function __clone() {
+		// Cloning instances of the class is forbidden
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woo-zap-mirror' ), '1.2.0' );
+	}
+
+	/**
+	 * Disable unserializing of the class.
+	 *
+	 * @since 1.3.0
+	 * @return void
+	 */
+	public function __wakeup() {
+		// Unserializing instances of the class is forbidden
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woo-zap-mirror' ), '1.2.0' );
+	}
+	
+	/**
+	 * Returns the *Singleton* instance of this class.
+	 *
+	 * @return Singleton The *Singleton* instance.
+	 */
+	public static function instance() {
+		if ( is_null( self::$_instance ) ) {
+			self::$_instance = new self();
+		}
+		return self::$_instance;
+	}
+	
+	/**
+	 * @return string
+	 */
+	public function __toString() {
+		return strtolower( get_class( $this ) );
+	}
+	
+	protected function __construct() {
+		add_action( 'admin_init', array( $this, 'check_environment' ) );
 		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-		
-		/**
-		 * Actions
-		 */
-		add_action( 'init', array( $this, 'init_slug' ) );
-		add_action( 'admin_init',  array( $this, 'plugin_info' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_scripts' ) );
-		add_action( 'admin_menu', array( $this, 'admin_menu' ), 99 );
 		add_action( 'admin_init', array( $this, 'register_zap_settings' ) );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ), 10 );
 		add_action( 'woocommerce_process_product_meta', array( $this, 'save' ), 10, 2 );
-		add_action( 'template_redirect', array( $this, 'mirror' ), 9999 );
-	}
-	
-	/**
-	 * Plugin info
-	 */
-	public function plugin_info() {
-		self::$info = get_plugin_data( __FILE__ );
-	}
-	
-	/**
-	 * Load text-domain
-	 */
-	public function localization() {
-		load_plugin_textdomain( 'woo-zap-mirror' );
-	}
-	
-	/**
-	 * Load mirror slug
-	 *
-	 * @return string mirror site slug
-	 */
-	public function init_slug() {
-		self::$slug = get_option( 'wc_zap_mirror_url', WC_Zap_Mirror::get_unique_slug() );
-		return self::$slug;
-	}
-	
-	/**
-	 * home_url() + Multilang compatibility
-	 *
-	 * @since 1.1.8
-	 *
-	 * @param string $input
-	 *
-	 * @return string modified home url
-	 */
-	public function home_url( $slug = '', $params = array() ) {
 		
-		global $wp_rewrite;
+		add_filter( "woocommerce_settings_tabs_array", 		array( $this, 'woocommerce_settings_tabs_array' ), 50 );
+		add_action( "woocommerce_settings_tabs_{$this}", 	array( $this, 'show_settings_tab' ) );
+		add_action( "woocommerce_update_options_{$this}", 	array( $this, 'update_settings_tab' ) );
 		
-		$url = '';
-		
-		/**
-		 * Polylang
-		 *
-		 * @since 1.1.8
-		 *
-		 */
-		if ( function_exists( 'pll_home_url' ) ) {
-			
-			$language = ( pll_current_language() ) ? pll_current_language() : pll_default_language();
-			
-			if ( empty( $wp_rewrite->permalink_structure ) ) {
-				$url = home_url( '/?lang=' . $language . '&pagename=' . $slug );
-			} else {
-				$url = home_url( '/' . $language . '/' . $slug );
+		add_filter( 'template_include', function( $template ) {
+			if ( is_embed() ) {
+				return $template;
 			}
 			
-			$url = trailingslashit( $url );
-			
-			if ( $params ) {
-				$url = add_query_arg( $params, $url );
-			}
-			
-		/**
-		 * WPML
-		 *
-		 * @since 1.1.8
-		 *
-		 */
-		} elseif ( defined( 'ICL_LANGUAGE_CODE' ) ) {
-			
-			global $sitepress;
-			
-			$settings = $sitepress->get_settings();
-			$language = ( ICL_LANGUAGE_CODE === 'all' ) ? $sitepress->get_default_language() : ICL_LANGUAGE_CODE;
-			
-			if ( empty( $wp_rewrite->permalink_structure ) || $settings['language_negotiation_type'] == 3 ) {
-				$url = add_query_arg( 'pagename', $slug, $sitepress->language_url( $language ) );
+			if ( is_page( wc_get_page_id( 'zap' ) ) ) {
+				echo 'test';exit;
+				$search_files = self::get_template_loader_files( $default_file );
+				$template     = locate_template( $search_files );
 				
-				if ( empty( $slug ) ) {
-					$url .= '=';
-				}
-				
-			} else {
-				$url = trailingslashit( $sitepress->language_url( $language ) );
-				
-				if ( !empty( $slug ) ) {
-					$url .= $slug;
-					$url = trailingslashit( $url );
+				if ( ! $template || WC_TEMPLATE_DEBUG_MODE ) {
+					$template = WC()->plugin_path() . '/templates/' . $default_file;
 				}
 			}
-			
-			if ( !empty( $params ) ) {
-				$url = add_query_arg( $params, $url );
-			}
-			
-		} else {
-			
-			if ( empty( $wp_rewrite->permalink_structure ) ) {
-				$url = home_url( '/?pagename=' . $slug );
-			} else {
-				$url = home_url( $wp_rewrite->front . $slug );
-			}
-			
-			if ( $params ) {
-				$url = add_query_arg( $params, $url );
-			}
+
+			return $template;
+		} );
+	}
+	
+	/**
+	 * Checks the environment for compatibility problems.
+	 *
+	 * @return void
+	 */
+	public function check_environment() {
+		if ( is_admin() && current_user_can( 'activate_plugins' ) && ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			$class = 'notice notice-error is-dismissible';
+			$message = __( 'This plugin requires <a href="https://wordpress.org/plugins/woocommerce/">WooCommerce</a> to be active.', 'woo-zap-mirror' );
+			$this->add_admin_notice( $class, $message );
+			// Deactivate the plugin
+			deactivate_plugins( __FILE__ );
+			return;
 		}
 		
-		return $url;
+		$php_version = phpversion();
+		$required_php_version = '5.3';
+		if ( version_compare( $required_php_version, $php_version, '>' ) ) {
+			$class = 'notice notice-warning is-dismissible';
+			$message = sprintf( __( 'Your server is running PHP version %1$s but some features requires at least %2$s.', 'woo-zap-mirror' ), $php_version, $required_php_version );
+			$this->add_admin_notice( $class, $message );
+		}
+		
+		if ( ! in_array( get_woocommerce_currency(), apply_filters( 'wc_pelecard_gateway_allowed_currencies', array( 'ILS', 'USD', 'EUR' ) ) ) ) {
+			$class = 'notice notice-error is-dismissible';
+			$message = __( 'No support for your store currency.', 'woo-zap-mirror' );
+			$this->add_admin_notice( $class, $message );
+		}
+	}
+	
+	/**
+	 * Add admin notices.
+	 *
+	 * @param string $class
+	 * @param string $message
+	 */
+	public function add_admin_notice( $class, $message ) {
+		$this->notices[] = array(
+			'class'   => $class,
+			'message' => $message
+		);
+	}
+	
+	/**
+	 * Display any notices collected.
+	 *
+	 * @return void
+	 */
+	public function admin_notices() {
+		foreach ( (array) $this->notices as $notice ) {
+			echo '<div class="' . esc_attr( $notice['class'] ) . '"><p><b>' . __( 'Woo Pelecard Gateway', 'woo-zap-mirror' ) . ': </b>';
+			echo wp_kses( $notice['message'], array( 'a' => array( 'href' => array() ) ) );
+			echo '</p></div>';
+		}
+	}
+	
+	/**
+	 * woocommerce_settings_tabs_array
+	 * Used to add a WooCommerce settings tab
+	 * @param  array $settings_tabs
+	 * @return array
+	 */
+	function woocommerce_settings_tabs_array( $settings_tabs ) {
+		$settings_tabs[ "{$this}" ] = __( 'Zap Mirror', 'woo-zap-mirror' );
+		return $settings_tabs;
+	}
+ 
+	/**
+	 * show_settings_tab
+	 * Used to display the WooCommerce settings tab content
+	 * @return void
+	 */
+	function show_settings_tab(){
+		woocommerce_admin_fields( $this->get_settings() );
+	}
+	
+	/**
+	 * update_settings_tab
+	 * Used to save the WooCommerce settings tab values
+	 * @return void
+	 */
+	function update_settings_tab(){
+		woocommerce_update_options( $this->get_settings() );
+	}
+	
+	/**
+	 * get_settings
+	 * Used to define the WooCommerce settings tab fields
+	 * @return void
+	 */
+	public function get_settings() {
+		$settings = array(
+			array(
+				'title' => __( 'Zap Mirror settings', 'woo-zap-mirror' ),
+				'type' 	=> 'title',
+				'desc' 	=> '',
+				'id' 	=> 'wc_zap_mirror_options',
+			),
+			array(
+				'title'    => __( 'Zap Mirror page', 'woo-zap-mirror' ),
+				'id'       => 'woocommerce_zap_page_id',
+				'type'     => 'single_select_page',
+				'default'  => '',
+				'class'    => 'wc-enhanced-select-nostd',
+				'css'      => 'min-width:300px;',
+				'desc_tip' => __( 'This sets the zap mirror page of your shop.', 'woo-zap-mirror' ),
+			),
+			array(
+				'type' 	=> 'sectionend',
+				'id' 	=> 'wc_zap_mirror_options',
+			),
+		);
+		return apply_filters( 'wc_zap_mirror_settings', $settings );
 	}
 	
 	/**
@@ -167,26 +223,6 @@ class WC_Zap_Mirror {
 	public function add_query_vars( $vars ) {
 		$vars[] = 'product_cat';
 		return $vars;
-	}
-	
-	/**
-	 * Check if mirror site is accessed
-	 *
-	 * @return bool check if mirror-site request
-	 */
-	private function is_mirror() {
-		
-		global $wp, $wp_query, $wp_rewrite;
-		
-		if ( !$wp_rewrite->permalink_structure && isset( $wp_query->query[ 'pagename' ] ) &&  $wp_query->query[ 'pagename' ] === self::$slug ) {
-			return true;
-		}
-		
-		if ( trailingslashit( $this->home_url( self::$slug ) ) === trailingslashit( home_url( $wp->request ) ) && $wp_query->is_404 ) {
-			return true;
-		}
-		
-		return false;
 	}
 	
 	/**
@@ -255,8 +291,6 @@ class WC_Zap_Mirror {
 			} else {
 				
 				if ( $terms = $this->get_tax_hierarchical( 'product_cat' ) ) {
-					
-					ob_start();
 					?>
 					<!DOCTYPE html>
 					<html <?php language_attributes(); ?>>
@@ -268,7 +302,6 @@ class WC_Zap_Mirror {
 					<body>
 						<script type="text/javascript">
 							d = new dTree("d");
-							
 							d.icon.root = "<?php echo plugins_url('/assets/dtree/img/globe.gif', __FILE__ ); ?>";
 							d.icon.folder = "<?php echo plugins_url('/assets/dtree/img/folder.gif', __FILE__ ); ?>";
 							d.icon.folderOpen = "<?php echo plugins_url('/assets/dtree/img/folderopen.gif', __FILE__ ); ?>";
@@ -283,18 +316,15 @@ class WC_Zap_Mirror {
 							d.icon.minusBottom = "<?php echo plugins_url('/assets/dtree/img/minusbottom.gif', __FILE__ ); ?>";
 							d.icon.nlPlus = "<?php echo plugins_url('/assets/dtree/img/nolines_plus.gif', __FILE__ ); ?>";
 							d.icon.nlMinus = "<?php echo plugins_url('/assets/dtree/img/nolines_minus.gif', __FILE__ ); ?>";
-							
 							d.add(0, -1, "<?php echo get_bloginfo( 'name' ); ?>", "<?php echo $this->home_url( self::$slug ); ?>");
-				
 							<?php $this->print_nodes( $terms, $exclude['product_cat'] ); ?>
-						
 							document.write(d);
 						</script>
 					</body>
 					</html>
 					<?php
 					
-					exit( $this->html_minify( ob_get_clean() ) );
+					exit;
 					
 				} else {
 					
@@ -303,34 +333,6 @@ class WC_Zap_Mirror {
 				}
 			}
 		}
-	}
-	
-	/**
-	 * HTML minification
-	 *
-	 * @param string $buffer current buffer contents
-	 *
-	 * @return string minified html code
-	 */
-	public function html_minify( $buffer ) {
-		
-		$search = array(
-			'/\>[^\S ]+/s',
-			'/[^\S ]+\</s',
-			'/(\s)+/s'
-		);
-
-		$replace = array(
-			'>',
-			'<',
-			'\\1'
-		);
-
-		$buffer = preg_replace($search, $replace, $buffer);
-		$buffer = preg_replace('/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/', '', $buffer);
-		$buffer = preg_replace('/\s+/', ' ', $buffer);
-		
-		return $buffer;
 	}
 	
 	/**
@@ -473,7 +475,6 @@ class WC_Zap_Mirror {
 	 *
 	 */
 	public function product_metabox( $post ) {
-		
 		$tags = array();
 		$product = new WC_Product( $post->ID );
 		
@@ -634,51 +635,6 @@ class WC_Zap_Mirror {
 	}
 	
 	/**
-	 * Add settings page
-	 */
-	public function admin_menu() {
-		add_submenu_page( 'woocommerce', __( 'Zap Settings', 'woo-zap-mirror' ), __( 'Zap Settings', 'woo-zap-mirror' ), 'manage_options', 'zap-settings', array( $this, 'wc_zap_submenu_page_callback' ) );
-	}
-	
-	/**
-	 * Setup options
-	 */
-	public static function set_up_options() {
-		add_option( 'wc_zap_mirror_url', WC_Zap_Mirror::get_unique_slug() );
-		add_option( 'wc_zap_hide_tax', array( 'product_cat' => array() ) );
-	}
-	
-	/**
-	 * Mirror slug validation
-	 *
-	 * @param string $input the requested slug
-	 *
-	 * @return string the validated slug
-	 */
-	public function validate_mirror_slug( $input ) {
-		return $this->get_unique_slug( $input );
-	}
-	
-	/**
-	 * Get unique slug
-	 *
-	 * @param string $input input slug
-	 *
-	 * @return string unique slug
-	 */
-	public static function get_unique_slug( $input = '' ) {
-		
-		$input = sanitize_title( $input );
-		
-		if ( empty( $input ) ) $input = 'zap';
-		
-		$slug = wp_unique_post_slug( $input, 0, 'publish', 'post', 0 );
-		$slug = wp_unique_post_slug( $slug, 0, 'publish', 'page', 0 );
-		
-		return $slug;
-	}
-	
-	/**
 	 * Hidden terms validation
 	 *
 	 * @param array|null $input the terms
@@ -822,7 +778,6 @@ class WC_Zap_Mirror {
 	 *
 	 */
 	public function admin_scripts( $hook ) {
-		
 		global $post_type;
 		
 		if( 'product' === $post_type || strpos( $hook, '_page_zap-settings' ) !== false ) {
@@ -840,11 +795,21 @@ class WC_Zap_Mirror {
 }
 
 /**
- * Instantiate
+ * @return WC_Zap_Mirror
  */
-if ( class_exists( 'SimpleXMLElement' ) && in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-	
-	register_activation_hook( __FILE__, array( 'WC_Zap_Mirror', 'set_up_options' ) );
-	
-	new WC_Zap_Mirror();
+function WC_Zap_Mirror() {
+	return WC_Zap_Mirror::instance();
 }
+
+// Global for backwards compatibility.
+$GLOBALS['wc_zap_mirror'] = WC_Zap_Mirror();
+
+// *
+ // * Instantiate
+
+// if ( class_exists( 'SimpleXMLElement' ) && in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+	
+	// register_activation_hook( __FILE__, array( 'WC_Zap_Mirror', 'set_up_options' ) );
+	
+	// new WC_Zap_Mirror();
+// }
