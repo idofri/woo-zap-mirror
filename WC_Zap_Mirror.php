@@ -191,7 +191,7 @@ final class WC_Zap_Mirror {
 			),
 			array(
 				'title'		=> __( 'Mirror Page', 'woo-zap-mirror' ),
-				'id'		=> "{$this}_page_id",
+				'id'		=> 'woocommerce_zap_page_id',
 				'type' 		=> 'single_select_page',
 				'default' 	=> '',
 				'class' 	=> 'wc-enhanced-select-nostd',
