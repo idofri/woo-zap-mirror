@@ -13,16 +13,16 @@ Text Domain: woo-zap-mirror
 
 /** @class WC_Zap_Mirror */
 final class WC_Zap_Mirror {
-	
+
 	/** The single instance of the class. */
 	protected static $_instance = null;
-	
+
 	/**
 	 * Notices (array)
 	 * @var array
 	 */
 	public $notices = array();
-	
+
 	/**
 	 * Throw error on object clone.
 	 *
@@ -34,7 +34,7 @@ final class WC_Zap_Mirror {
 	 */
 	public function __clone() {
 		// Cloning instances of the class is forbidden
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woo-zap-mirror' ), '1.2.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woo-zap-mirror' ), '1.3.0' );
 	}
 
 	/**
@@ -45,9 +45,9 @@ final class WC_Zap_Mirror {
 	 */
 	public function __wakeup() {
 		// Unserializing instances of the class is forbidden
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woo-zap-mirror' ), '1.2.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woo-zap-mirror' ), '1.3.0' );
 	}
-	
+
 	/**
 	 * Returns the *Singleton* instance of this class.
 	 *
@@ -59,32 +59,35 @@ final class WC_Zap_Mirror {
 		}
 		return self::$_instance;
 	}
-	
+
 	/**
 	 * @return string
 	 */
 	public function __toString() {
 		return strtolower( get_class( $this ) );
 	}
-	
+
+	/**
+	 * Constructor.
+	 */
 	protected function __construct() {
 		add_action( 'admin_init', 							array( $this, 'check_environment' ) );
-		add_filter( 'query_vars', 							array( $this, 'query_vars' ) );
-		add_action( 'add_meta_boxes', 						array( $this, 'add_meta_boxes' ), 10 );
-		add_action( 'woocommerce_process_product_meta', 	array( $this, 'save' ), 10, 2 );
+		add_action( 'admin_notices', 						array( $this, 'admin_notices' ) );
+		add_filter( 'query_vars', 							array( $this, 'add_custom_query_var' ) );
+
 		add_filter( "woocommerce_settings_tabs_array", 		array( $this, 'woocommerce_settings_tabs_array' ), 50 );
 		add_action( "woocommerce_settings_tabs_{$this}", 	array( $this, 'show_settings_tab' ) );
 		add_action( "woocommerce_update_options_{$this}", 	array( $this, 'update_settings_tab' ) );
-		add_action( "woocommerce_admin_field_checklist",	array( $this, 'checklist' ) );
-		
-		add_filter( 'template_include', function( $template ) {
-			if (  is_page( wc_get_page_id( 'zap' ) ) ) {
-				$this->mirror();
-			}
-			return $template;
-		} );
+		add_action( "woocommerce_admin_field_checklist",	array( $this, 'output_checklist_field' ) );
+
+		add_action( 'woocommerce_product_data_tabs', 		array( $this, 'add_product_data_tab' ) );
+		add_action( 'woocommerce_product_data_panels', 		array( $this, 'add_product_data_panel' ) );
+		add_action( 'woocommerce_process_product_meta', 	array( $this, 'process_product_meta' ) );
+
+		add_filter( 'template_include', 					array( $this, 'template_loader' ) );
+		add_action( 'admin_enqueue_scripts',				array( $this, 'admin_enqueue_scripts' ) );
 	}
-	
+
 	/**
 	 * Checks the environment for compatibility problems.
 	 *
@@ -100,6 +103,12 @@ final class WC_Zap_Mirror {
 			return;
 		}
 		
+		if ( ! class_exists( 'SimpleXMLElement' ) ) {
+			$class = 'notice notice-error is-dismissible';
+			$message = __( 'The SimpleXMLElement extension could not be found. Please ask your host to install this extension.', 'woo-zap-mirror' );
+			$this->add_admin_notice( $class, $message );
+		}
+
 		$php_version = phpversion();
 		$required_php_version = '5.3';
 		if ( version_compare( $required_php_version, $php_version, '>' ) ) {
@@ -107,14 +116,31 @@ final class WC_Zap_Mirror {
 			$message = sprintf( __( 'Your server is running PHP version %1$s but some features requires at least %2$s.', 'woo-zap-mirror' ), $php_version, $required_php_version );
 			$this->add_admin_notice( $class, $message );
 		}
-		
-		if ( ! in_array( get_woocommerce_currency(), apply_filters( 'wc_pelecard_gateway_allowed_currencies', array( 'ILS', 'USD', 'EUR' ) ) ) ) {
-			$class = 'notice notice-error is-dismissible';
-			$message = __( 'No support for your store currency.', 'woo-zap-mirror' );
-			$this->add_admin_notice( $class, $message );
-		}
+	}
+
+	/**
+	 * Get the plugin path.
+	 *
+	 * @return string
+	 */
+	public function plugin_path() {
+		return untrailingslashit( plugin_dir_path( __FILE__ ) );
 	}
 	
+	/**
+	 * Returns current plugin version.
+	 *
+	 * @return string Plugin version
+	 */
+	protected function get_version() {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		}
+		$plugin_folder = get_plugins( '/' . plugin_basename( dirname( __FILE__ ) ) );
+		$plugin_file = basename( __FILE__ );
+		return $plugin_folder[ $plugin_file ]['Version'];
+	}
+
 	/**
 	 * Add admin notices.
 	 *
@@ -127,46 +153,232 @@ final class WC_Zap_Mirror {
 			'message' => $message
 		);
 	}
-	
+
 	/**
-	 * Display any notices collected.
-	 *
-	 * @return void
+	 * Notices function.
 	 */
 	public function admin_notices() {
 		foreach ( (array) $this->notices as $notice ) {
-			echo '<div class="' . esc_attr( $notice['class'] ) . '"><p><b>' . __( 'Woo Pelecard Gateway', 'woo-zap-mirror' ) . ': </b>';
+			echo '<div class="' . esc_attr( $notice['class'] ) . '"><p><b>' . __( 'Woo Zap Mirror', 'woo-zap-mirror' ) . ': </b>';
 			echo wp_kses( $notice['message'], array( 'a' => array( 'href' => array() ) ) );
 			echo '</p></div>';
 		}
 	}
+
+	/**
+	 * Enqueue admin scripts and styles.
+	 */
+	public function admin_enqueue_scripts() {
+		 wp_enqueue_style( 'woo-zap-mirror', plugins_url( '/assets/css/style.css', __FILE__ ), array(), $this->get_version() );
+	}
+
+	/**
+	 * Add query vars.
+	 *
+	 * @access public
+	 * @param array $vars
+	 * @return array
+	 */
+	public function add_custom_query_var( $vars ) {
+		$vars[] = 'product_cat';
+		return $vars;
+	}
+
+	/**
+	 * Load mirror site.
+	 *
+	 * @param mixed $template
+	 * @return string
+	 */
+	public function template_loader( $template ) {
+		if (  is_page( wc_get_page_id( 'zap' ) ) ) {
+			$this->mirror();
+		}
+		return $template;
+	}
+
+	/**
+	 * Add custom product tab.
+	 *
+	 * @param array $tabs
+	 */
+	public function add_product_data_tab( $tabs ) {
+		$tabs['zap'] = array(
+			'label' => __( 'Zap Settings', 'woo-zap-mirror' ),
+			'target' => 'zap_product_data',
+			'class' => '',
+		);
+	    return $tabs;
+	}
 	
 	/**
-	 * woocommerce_settings_tabs_array
-	 * Used to add a WooCommerce settings tab
+	 * Contents of the Zap settings product tab.
+	 */
+	public function add_product_data_panel() {
+		global $post, $woocommerce;
+
+		?><div id="zap_product_data" class="panel woocommerce_options_panel hidden">
+			<div class="options_group">
+				<?php
+				woocommerce_wp_checkbox( array(
+					'id' 				=> '_wc_zap_disable',
+					'label' 			=> __( 'Hide Product', 'woo-zap-mirror' )
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_product_name',
+					'label' 			=> __( 'Product Name', 'woo-zap-mirror' ),
+					'type' 				=> 'text'
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_product_model',
+					'label' 			=> __( 'Product Model', 'woo-zap-mirror' ),
+					'type' 				=> 'text',
+					'description' 		=> __( 'Optional', 'woo-zap-mirror' )
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_product_catalog_number',
+					'label' 			=> __( 'Product Catalog Number', 'woo-zap-mirror' ),
+					'type' 				=> 'text'
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_product_catalog_number',
+					'value'				=> 'ILS',
+					'label' 			=> __( 'Currency', 'woo-zap-mirror' ),
+					'type' 				=> 'text',
+					'custom_attributes' => array(
+						'disabled' => 'disabled'
+					)
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_product_price',
+					'label' 			=> __( 'Price', 'woo-zap-mirror' ),
+					'type' 				=> 'number',
+					'description' 		=> __( 'Digits only', 'woo-zap-mirror' ),
+					'custom_attributes'	=> array(
+						'step' 	=> 'any',
+						'min' 	=> '0'
+					)
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_shipment',
+					'label' 			=> __( 'Shipping Costs', 'woo-zap-mirror' ),
+					'type' 				=> 'number',
+					'description' 		=> __( 'Digits only', 'woo-zap-mirror' ),
+					'custom_attributes'	=> array(
+						'step' 	=> 'any',
+						'min' 	=> '0'
+					)
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_delivery',
+					'label' 			=> __( 'Delivery Time', 'woo-zap-mirror' ),
+					'type' 				=> 'number',
+					'description' 		=> __( 'Digits only', 'woo-zap-mirror' ),
+					'custom_attributes'	=> array(
+						'step' 	=> 'any',
+						'min' 	=> '0'
+					)
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_manufacturer',
+					'label' 			=> __( 'Manufacturer', 'woo-zap-mirror' ),
+					'type' 				=> 'text',
+					'description' 		=> __( 'Should also appear in product\'s name', 'woo-zap-mirror' )
+				) );
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_warranty',
+					'label' 			=> __( 'Warranty', 'woo-zap-mirror' ),
+					'type' 				=> 'text'
+				) );
+				woocommerce_wp_textarea_input( array(
+					'id' 				=> '_wc_zap_product_description',
+					'label' 			=> __( 'Product Description', 'woo-zap-mirror' ),
+					'description' 		=> __( 'Maximum 255 characters', 'woo-zap-mirror' ),
+					'custom_attributes'	=> array(
+						'maxlength' => '255'
+					)
+				) );
+				?>
+				<p class="form-field">
+					<label for="_wc_zap_product_image"><?php _e( 'Image', 'woo-zap-mirror' ); ?></label>
+					<img src="<?php echo has_post_thumbnail() ? get_the_post_thumbnail_url( $post->ID, 'shop_thumbnail' ) : wc_placeholder_img_src(); ?>" id="_wc_zap_product_image" />
+				</p>
+			</div>
+		</div><?php
+	}
+
+	/**
+	 * Save Zap settings
+	 *
+	 * @param  int $post_id
+	 * @return void
+	 */
+	public function process_product_meta( $post_id ) {
+		if ( ! empty( $_POST['_wc_zap_disable'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_disable', 'yes' );
+		} else {
+			update_post_meta( $post_id, '_wc_zap_disable', '' );
+		}
+
+		if ( isset( $_POST['_wc_zap_product_name'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_product_name', wc_clean( mb_substr( $_POST['_wc_zap_product_name'], 0, 30, "utf-8" ) ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_product_model'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_product_model', wc_clean( $_POST['_wc_zap_product_model'] ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_product_description'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_product_description', wc_clean( mb_substr( $_POST['_wc_zap_product_description'], 0, 255, "utf-8" ) ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_product_catalog_number'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_product_catalog_number', wc_clean( $_POST['_wc_zap_product_catalog_number'] ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_product_price'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_product_price', wc_clean( $_POST['_wc_zap_product_price'] ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_shipment'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_shipment', wc_clean( $_POST['_wc_zap_shipment'] ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_delivery'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_delivery', wc_clean( $_POST['_wc_zap_delivery'] ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_manufacturer'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_manufacturer', wc_clean( $_POST['_wc_zap_manufacturer'] ) );
+		}
+
+		if ( isset( $_POST['_wc_zap_warranty'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_warranty', wc_clean( $_POST['_wc_zap_warranty'] ) );
+		}
+	}
+
+	/**
+	 * Add a new settings tab to the WooCommerce settings tabs array.
+	 *
 	 * @param  array $settings_tabs
 	 * @return array
 	 */
-	function woocommerce_settings_tabs_array( $settings_tabs ) {
+	public function woocommerce_settings_tabs_array( $settings_tabs ) {
 		$settings_tabs[ "{$this}" ] = __( 'Zap Mirror', 'woo-zap-mirror' );
 		return $settings_tabs;
 	}
- 
+
 	/**
-	 * show_settings_tab
-	 * Used to display the WooCommerce settings tab content
-	 * @return void
+	 * Uses the WooCommerce admin fields API to output settings via the @see woocommerce_admin_fields() function.
 	 */
-	function show_settings_tab(){
+	public function show_settings_tab(){
 		woocommerce_admin_fields( $this->get_settings() );
 	}
-	
+
 	/**
-	 * update_settings_tab
-	 * Used to save the WooCommerce settings tab values
-	 * @return void
+	 * Uses the WooCommerce options API to save settings via the @see woocommerce_update_options() function.
 	 */
-	function update_settings_tab(){
+	public function update_settings_tab(){
 		// Fix
 		add_filter( "woocommerce_admin_settings_sanitize_option_{$this}_categories_checklist", function( $value ) {
 			if ( is_null( $value ) ) {
@@ -176,11 +388,11 @@ final class WC_Zap_Mirror {
 		} );
 		woocommerce_update_options( $this->get_settings() );
 	}
-	
+
 	/**
-	 * get_settings
-	 * Used to define the WooCommerce settings tab fields
-	 * @return void
+	 * Get all the settings for this plugin for @see woocommerce_admin_fields() function.
+	 *
+	 * @return array
 	 */
 	public function get_settings() {
 		$settings = array(
@@ -211,19 +423,24 @@ final class WC_Zap_Mirror {
 		);
 		return apply_filters( 'wc_zap_mirror_settings', $settings );
 	}
-	
-	public function checklist( $value ) {
+
+	/**
+	 * Used to print the settings field of the custom-type checklist field.
+	 *
+	 * @param  array $value
+	 */
+	public function output_checklist_field( $value ) {
 		$field_description = WC_Admin_Settings::get_field_description( $value );
 		extract( $field_description );
-		
+
 		?><tr valign="top" class="single_select_page">
 			<th scope="row" class="titledesc"><?php echo esc_html( $value['title'] ) ?> <?php echo $tooltip_html; ?></th>
 			<td class="forminp categorydiv">
 				<div id="product_cat-all" class="tabs-panel" style="width: 368px; padding: 10px 15px">
 					<ul id="product_catchecklist" data-wp-lists="list:product_cat" class="categorychecklist form-no-clear" style="margin: 0">
-						<?php echo str_replace( 'tax_input[product_cat]', $value['id'], wp_terms_checklist( wc_get_page_id( 'zap' ), array( 
+						<?php echo str_replace( 'tax_input[product_cat]', $value['id'], wp_terms_checklist( wc_get_page_id( 'zap' ), array(
 							'selected_cats'	=> WC_Admin_Settings::get_option( $value['id'] ),
-							'taxonomy' 		=> 'product_cat', 
+							'taxonomy' 		=> 'product_cat',
 							'echo' 			=> false
 						) ) ); ?>
 					</ul>
@@ -232,25 +449,14 @@ final class WC_Zap_Mirror {
 			</td>
 		</tr><?php
 	}
-	
+
 	/**
-	 * Register query vars
-	 *
-	 * @param array $vars array of current query vars
-	 *
-	 * @return array modified vars array
-	 */
-	public function query_vars( $vars ) {
-		$vars[] = 'product_cat';
-		return $vars;
-	}
-	
-	/**
-	 * Mirror site redirection handle
+	 * [mirror description]
+	 * @return [type] [description]
 	 */
 	public function mirror() {
 		$exclude = WC_Admin_Settings::get_option( "{$this}_categories_checklist" );
-		
+
 		// XML
 		if ( $product_cat = get_query_var( 'product_cat' ) ) {
 			if ( in_array( $product_cat, $exclude ) ) {
@@ -260,66 +466,37 @@ final class WC_Zap_Mirror {
 			if ( ! $products->have_posts() ) {
 				wp_die( __( 'No available products.', 'woo-zap-mirror' ) );
 			}
-			$this->xml( $products );
-			
-		// HTML
+			$this->create_xml( $products );
+
+		// HTML Template
 		} else {
-			if ( $terms = $this->get_terms() ) {
-				ob_start();
-				$this->nodes( $terms, $exclude );
-				$nodes = ob_get_clean();
-				$this->html( $nodes );
-			} else {
+			if ( ! $terms = $this->get_terms() ) {
 				wp_die( __( 'No categories found.', 'woo-zap-mirror' ) );
 			}
+			ob_start();
+			$this->nodes( $terms, $exclude );
+			$nodes = ob_get_clean();
+			wc_get_template( 'zap/mirror.php', array( 'nodes' => $nodes ), null, $this->plugin_path() . '/templates/' );
 		}
-		
+
 		// EOF
 		exit;
 	}
-	
-	public function html( $nodes ) {
-		?><!DOCTYPE html>
-		<html <?php language_attributes(); ?>>
-		<head>
-			<title><?php wp_title(''); ?></title>
-			<link rel="stylesheet" href="<?php echo plugins_url('/assets/dtree/dtree.css', __FILE__ ); ?>" type="text/css" />
-			<script type="text/javascript" src="<?php echo plugins_url('/assets/dtree/dtree.js', __FILE__ ); ?>"></script>
-		</head>
-		<body>
-			<script type="text/javascript">
-				d = new dTree("d");
-				d.icon.root 		= "<?php echo plugins_url( '/assets/dtree/img/globe.gif', __FILE__ ); ?>";
-				d.icon.folder 		= "<?php echo plugins_url( '/assets/dtree/img/folder.gif', __FILE__ ); ?>";
-				d.icon.folderOpen 	= "<?php echo plugins_url( '/assets/dtree/img/folderopen.gif', __FILE__ ); ?>";
-				d.icon.node 		= "<?php echo plugins_url( '/assets/dtree/img/folder.gif', __FILE__ ); ?>";
-				d.icon.empty		= "<?php echo plugins_url( '/assets/dtree/img/empty.gif', __FILE__ ); ?>";
-				d.icon.line 		= "<?php echo plugins_url( '/assets/dtree/img/line.gif', __FILE__ ); ?>";
-				d.icon.join 		= "<?php echo plugins_url( '/assets/dtree/img/join.gif', __FILE__ ); ?>";
-				d.icon.joinBottom 	= "<?php echo plugins_url( '/assets/dtree/img/joinbottom.gif', __FILE__ ); ?>";
-				d.icon.plus 		= "<?php echo plugins_url( '/assets/dtree/img/plus.gif', __FILE__ ); ?>";
-				d.icon.plusBottom 	= "<?php echo plugins_url( '/assets/dtree/img/plusbottom.gif', __FILE__ ); ?>";
-				d.icon.minus 		= "<?php echo plugins_url( '/assets/dtree/img/minus.gif', __FILE__ ); ?>";
-				d.icon.minusBottom 	= "<?php echo plugins_url( '/assets/dtree/img/minusbottom.gif', __FILE__ ); ?>";
-				d.icon.nlPlus 		= "<?php echo plugins_url( '/assets/dtree/img/nolines_plus.gif', __FILE__ ); ?>";
-				d.icon.nlMinus		= "<?php echo plugins_url( '/assets/dtree/img/nolines_minus.gif', __FILE__ ); ?>";
-				d.add(0, -1, "<?php echo get_bloginfo( 'name' ); ?>", "<?php echo wc_get_page_permalink( 'zap' ); ?>");
-				<?php echo $nodes; ?>
-				document.write(d);
-			</script>
-		</body>
-		</html><?php
-	}
-	
-	public function xml( $products ) {
+
+	/**
+	 * [create_xml description]
+	 * @param  [type] $products [description]
+	 * @return [type]           [description]
+	 */
+	public function create_xml( $products ) {
 		header( "Content-Type: application/xml; charset=utf-8" );
-		
+
 		$xml = new SimpleXMLElement( '<?xml version="1.0" encoding="UTF-8"?><STORE></STORE>' );
 		$xml->addAttribute( 'URL', home_url() );
 		$xml->addAttribute( 'DATE', date_i18n( 'd/m/Y' ) );
 		$xml->addAttribute( 'TIME', date_i18n( 'H:i:s' ) );
 		$xml->addChild( 'PRODUCTS' );
-		
+
 		foreach ( $products->posts as $post ) {
 			$post_id = $post->ID;
 			$product = wc_get_product( $post_id );
@@ -339,25 +516,25 @@ final class WC_Zap_Mirror {
 			$node->IMAGE 			= $product->get_image_id() ? wp_get_attachment_url( $product->get_image_id() ) : wc_placeholder_img_src();
 			$node->TAX 				= 1;
 			
+			// Fires after node properties have been set.
 			do_action_ref_array( 'wc_zap_mirror_xml_node', array( &$node, $product, $post ) );
 			do_action_ref_array( "wc_zap_mirror_xml_node_{$post_id}", array( &$node, $product, $post ) );
 		}
 		
+		// Fires after XML is ready.
 		do_action_ref_array( 'wc_zap_mirror_xml', array( &$xml, $products ) );
-		
+
 		echo $xml->asXML();
 	}
-	
+
 	/**
-	 * Get products
-	 *
-	 * @param int $term_id term id
-	 *
-	 * @return object products by term wp_query
+	 * [get_products_by_term description]
+	 * @param  [type] $term_id [description]
+	 * @return [type]          [description]
 	 */
 	public function get_products_by_term( $term_id ) {
 		$args = array(
-			'post_type' 		=> 'product', 
+			'post_type' 		=> 'product',
 			'posts_per_page' 	=> -1,
 			'tax_query' 		=> array(
 				array(
@@ -366,13 +543,13 @@ final class WC_Zap_Mirror {
 					'terms' 			=> $term_id,
 					'include_children'	=> false,
 					'operator' 			=> 'IN'
-				), 
+				),
 			),
 			'meta_query' => array(
 				'relation' => 'OR',
 				array(
 					'key'     	=> '_wc_zap_disable',
-					'value'		=> 1,
+					'value'		=> 'yes',
 					'compare' 	=> '!=',
 				),
 				array(
@@ -382,16 +559,15 @@ final class WC_Zap_Mirror {
 				),
 			)
 		);
-		
+
 		return new WP_Query( $args );
 	}
-	
+
 	/**
-	 * Print tree nodes
-	 *
-	 * @param array $terms ids of terms to print
-	 * @param array $exclude ids of terms to exclude
-	 *
+	 * [nodes description]
+	 * @param  [type] $terms   [description]
+	 * @param  [type] $exclude [description]
+	 * @return [type]          [description]
 	 */
 	public function nodes( $terms, $exclude ) {
 		array_walk_recursive( $terms, function ( &$term, $term_id ) use ( $exclude ) {
@@ -403,20 +579,17 @@ final class WC_Zap_Mirror {
 				$node 	= "d.add('{$id}', '{$pid}', '{$name}', '{$url}');" . PHP_EOL;
 				echo apply_filters( "wc_zap_mirror_html_node_{$term_id}", $node, $term_id );
 			}
-			
+
 			if ( ! empty( $term->nodes ) ) {
 				$this->nodes( $term->nodes, $exclude );
 			}
 		} );
 	}
-	
+
 	/**
-	 * Get terms hierarchically
-	 *
-	 * @param array|string $taxonomy the taxonomies
-	 * @param int $parent parent term id
-	 *
-	 * @return array all terms sorted hierarchically
+	 * [get_terms description]
+	 * @param  integer $parent [description]
+	 * @return [type]          [description]
 	 */
 	public function get_terms( $parent = 0 ) {
 		$terms = get_terms( 'product_cat', array( 'parent' => $parent, 'hide_empty' => 0 ) );
@@ -427,224 +600,7 @@ final class WC_Zap_Mirror {
 		}
 		return $nodes;
 	}
-	
-	/**
-	 * Save box metadata
-	 *
-	 * @param int $post_id the post id
-	 * @param object $post the post object
-	 *
-	 */
-	public function save( $post_id, $post ) {
-		if ( ! isset( $_POST['woo_zap_mirror_nonce'] ) || ! wp_verify_nonce( $_POST['woo_zap_mirror_nonce'], 'woo_zap_update_settings' ) ) {
-			return;
-		}
-		
-		$disabled = ( isset( $_POST['_wc_zap_disable'] ) ) ? 1 : 0;
-		update_post_meta( $post_id, '_wc_zap_disable', $disabled );
-		
-		if ( isset( $_POST['_wc_zap_product_name'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_product_name', wc_clean( mb_substr( $_POST['_wc_zap_product_name'], 0, 30, "utf-8" ) ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_product_model'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_product_model', wc_clean( $_POST['_wc_zap_product_model'] ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_product_description'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_product_description', wc_clean( mb_substr( $_POST['_wc_zap_product_description'], 0, 255, "utf-8" ) ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_product_catalog_number'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_product_catalog_number', wc_clean( $_POST['_wc_zap_product_catalog_number'] ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_product_price'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_product_price', wc_clean( $_POST['_wc_zap_product_price'] ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_shipment'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_shipment', wc_clean( $_POST['_wc_zap_shipment'] ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_delivery'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_delivery', wc_clean( $_POST['_wc_zap_delivery'] ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_manufacturer'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_manufacturer', wc_clean( $_POST['_wc_zap_manufacturer'] ) );
-		}
-		
-		if ( isset( $_POST['_wc_zap_warranty'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_warranty', wc_clean( $_POST['_wc_zap_warranty'] ) );
-		}
-	}
-	
-	/*
-	 * Print metabox
-	 *
-	 * @param object $post the post object
-	 *
-	 */
-	public function product_metabox( $post ) {
-		$tags = array();
-		$product = new WC_Product( $post->ID );
-		
-		if ( $attributes = $product->get_attributes() ) {
-			foreach ( $attributes as $attribute ) {
-				if ( $attribute['is_taxonomy'] ) {
-					foreach ( $this->get_terms( $attribute['name'] ) as $term ) {
-						$tags[] = $term->name;
-					}
-				} else {
-					if ( is_array( $values = explode( '|', $attribute['value'] ) ) ) {
-						foreach ( $values as $value ) {
-							$tags[] = trim( $value );
-						}
-					} else {
-						$tags[] = $values;
-					}
-				}
-			}
-			
-			sort( $tags );
-		}
-		?>
-		<p id="wc-zap-checkbox">
-			<label for="wc-zap-disable">
-				<input id="wc-zap-disable" name="_wc_zap_disable" type="checkbox" value="1" <?php checked('1', get_post_meta( $post->ID, '_wc_zap_disable', true ) ); ?>>
-				<?php _e( 'Hide Product', 'woo-zap-mirror' ); ?>
-			</label>
-		</p>
-		<div id="wc-zap-options" class="<?php if ( get_post_meta( $post->ID, '_wc_zap_disable', true ) ) { ?>disabled<?php } ?>">
-			<div class="wc-zap-row-hidden">
-				<?php wp_nonce_field( 'woo_zap_update_settings', 'woo_zap_mirror_nonce' ); ?>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Product Name', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto">(<?php _e( 'Maximum 30 characters', 'woo-zap-mirror' ); ?>)</p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-product-name"><?php _e( 'Product Name', 'woo-zap-mirror' ); ?></label>
-					<input type="text" id="wc-zap-product-name" name="_wc_zap_product_name" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_product_name', true ) ); ?>" placeholder="<?php echo esc_attr( $post->post_title ); ?>" maxlength="30" />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Product Model', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto">(<?php _e( 'Optional', 'woo-zap-mirror' ); ?>)</p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-product-model"><?php _e( 'Product Model', 'woo-zap-mirror' ); ?></label>
-					<input type="text" id="wc-zap-product-model" name="_wc_zap_product_model" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_product_model', true ) ); ?>"  />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Product Catalog Number', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto"></p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-product-catalog-number"><?php _e( 'Product Catalog Number', 'woo-zap-mirror' ); ?></label>
-					<input type="text" id="wc-zap-product-catalog-number" name="_wc_zap_product_catalog_number" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_product_catalog_number', true ) ); ?>" placeholder="<?php echo esc_attr( $product->get_sku() ); ?>" />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Currency', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto"></p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-product-currency"><?php _e( 'Currency', 'woo-zap-mirror' ); ?></label>
-					<input type="text" id="wc-zap-product-currency" class="wc_zap_input" value="ILS" disabled />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Price', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto">(<?php _e( 'Digits only', 'woo-zap-mirror' ); ?>)</p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-product-price"><?php _e( 'Price', 'woo-zap-mirror' ); ?></label>
-					<input type="number" id="wc-zap-product-price" name="_wc_zap_product_price" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_product_price', true ) ); ?>" min="0" step="any" placeholder="<?php echo esc_attr( absint( $product->get_price() ) ); ?>" />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Shipping Costs', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto">(<?php _e( 'Digits only', 'woo-zap-mirror' ); ?>)</p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-shipment"><?php _e( 'Shipping Costs', 'woo-zap-mirror' ); ?></label>
-					<input type="number" id="wc-zap-shipment" name="_wc_zap_shipment" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_shipment', true ) ); ?>" min="0" step="any" />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Delivery Time', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto">(<?php _e( 'Digits only', 'woo-zap-mirror' ); ?>)</p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-delivery"><?php _e( 'Delivery Time', 'woo-zap-mirror' ); ?></label>
-					<input type="number" id="wc-zap-delivery" name="_wc_zap_delivery" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_delivery', true ) ); ?>" min="0" />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Manufacturer', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto">(<?php _e( 'Should also appear in product\'s name', 'woo-zap-mirror' ); ?>)</p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-manufacturer"><?php _e( 'Manufacturer', 'woo-zap-mirror' ); ?></label>
-					<input type="text" id="wc-zap-manufacturer" name="_wc_zap_manufacturer" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_manufacturer', true ) ); ?>" />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Warranty', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto"></p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-warranty"><?php _e( 'Warranty', 'woo-zap-mirror' ); ?></label>
-					<input type="text" id="wc-zap-warranty" name="_wc_zap_warranty" class="wc_zap_input" value="<?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_warranty', true ) ); ?>" />
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label wc-zap-valign-top">
-					<strong><?php _e( 'Product Description', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto">(<?php _e( 'Maximum 255 characters', 'woo-zap-mirror' ); ?>)</p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<label class="screen-reader-text" for="wc-zap-product-description"><?php _e( 'Product Description', 'woo-zap-mirror' ); ?></label>
-					<textarea id="wc-zap-product-description" name="_wc_zap_product_description" class="wc_zap_input" placeholder="<?php echo esc_attr( $post->post_excerpt ); ?>" rows="3" maxlength="255"><?php echo esc_attr( get_post_meta( $post->ID, '_wc_zap_product_description', true ) ); ?></textarea>
-				</div>
-			</div>
-			<div class="wc-zap-row">
-				<div class="wc-zap-row-label">
-					<strong><?php _e( 'Image', 'woo-zap-mirror' ); ?></strong>
-					<p class="howto"></p>
-				</div><!--
-				--><div class="wc-zap-row-input">
-					<?php $product_image_src = ( $product->get_image_id() ) ? wp_get_attachment_url( $product->get_image_id(), 'thumbnail' ) : wc_placeholder_img_src(); ?>
-					<label class="screen-reader-text" for="wc-zap-product-image"><?php _e( 'Image', 'woo-zap-mirror' ); ?></label>
-					<img src="<?php echo $product_image_src; ?>" id="wc-zap-product-image" class="wc_zap_input" />
-				</div>
-			</div>
-		</div>
-		<script>
-		var tagsAttributes = ["<?php echo implode( '","', $tags ); ?>"];
-		var SelectionLimit = "<?php _e( 'Only single value allowed', 'woo-zap-mirror' ); ?>";
-		</script>
-		<?php
-	}
-	
-	/**
-	 * Register product settings metabox
-	 */
-	public function add_meta_boxes() {
-		add_meta_box( 'woo-zap-mirror', __( 'Zap Settings', 'woo-zap-mirror' ), array( $this, 'product_metabox' ), 'product', 'advanced', 'low' );
-	}
+
 }
 
 /**
@@ -656,5 +612,3 @@ function WC_Zap_Mirror() {
 
 // Global for backwards compatibility.
 $GLOBALS['wc_zap_mirror'] = WC_Zap_Mirror();
-
-// class_exists( 'SimpleXMLElement' )

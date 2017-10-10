@@ -1,0 +1,7 @@
+li.zap_options > a:before {
+	content: "" !important;
+	display: inline-block;
+	background-image: url('../images/zap.ico');
+	height: 16px;
+    width: 16px;
+}
