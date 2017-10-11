@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 Plugin Name: Woo Zap Mirror
 Plugin URI:  https://wordpress.org/plugins/woo-zap-mirror/
 Description: Creates a mirror site for Zap.
-Version:     1.2.2
+Version:     1.3.0
 Author:      Ido Friedlander
 Author URI:  https://profiles.wordpress.org/idofri/
 Text Domain: woo-zap-mirror
@@ -66,18 +66,16 @@ final class WC_Zap_Mirror {
 	protected function __construct() {
 		add_action( 'admin_init', 								array( $this, 'check_environment' ) );
 		add_action( 'admin_notices', 							array( $this, 'admin_notices' ) );
-		add_filter( 'query_vars', 								array( $this, 'add_custom_query_var' ) );
-
-		add_filter( "woocommerce_settings_tabs_array", 			array( $this, 'woocommerce_settings_tabs_array' ), 25 );
-		add_action( "woocommerce_settings_tabs_zap_mirror", 	array( $this, 'show_settings_tab' ) );
-		add_action( "woocommerce_update_options_zap_mirror", 	array( $this, 'update_settings_tab' ) );
-		add_action( "woocommerce_admin_field_checklist",		array( $this, 'output_checklist_field' ) );
+		add_action( 'admin_enqueue_scripts',					array( $this, 'admin_enqueue_scripts' ) );
+		add_filter( 'woocommerce_settings_tabs_array', 			array( $this, 'woocommerce_settings_tabs_array' ), 25 );
+		add_action( 'woocommerce_settings_tabs_zap_mirror', 	array( $this, 'show_settings_tab' ) );
+		add_action( 'woocommerce_update_options_zap_mirror', 	array( $this, 'update_settings_tab' ) );
+		add_action( 'woocommerce_admin_field_checklist',		array( $this, 'output_checklist_field' ) );
 		add_action( 'woocommerce_product_data_tabs', 			array( $this, 'add_product_data_tab' ) );
 		add_action( 'woocommerce_product_data_panels', 			array( $this, 'add_product_data_panel' ) );
 		add_action( 'woocommerce_process_product_meta', 		array( $this, 'process_product_meta' ) );
-
+		add_filter( 'query_vars', 								array( $this, 'add_custom_query_var' ) );
 		add_filter( 'template_include', 						array( $this, 'template_loader' ) );
-		add_action( 'admin_enqueue_scripts',					array( $this, 'admin_enqueue_scripts' ) );
 	}
 
 	/**
@@ -310,9 +308,9 @@ final class WC_Zap_Mirror {
 	}
 
 	/**
-	 * Save Zap settings
+	 * Save settings
 	 *
-	 * @param  int $post_id
+	 * @param int $post_id
 	 * @return void
 	 */
 	public function process_product_meta( $post_id ) {
