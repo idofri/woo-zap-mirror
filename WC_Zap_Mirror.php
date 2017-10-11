@@ -379,7 +379,7 @@ final class WC_Zap_Mirror {
 	 * @return array
 	 */
 	public function add_settings_tab( $settings_tabs ) {
-		$settings_tabs[ 'zap_mirror' ] = __( 'Zap Mirror', 'woo-zap-mirror' );
+		$settings_tabs[ 'zap_mirror' ] = __( 'Zap Mirror Site', 'woo-zap-mirror' );
 		return $settings_tabs;
 	}
 
@@ -412,12 +412,12 @@ final class WC_Zap_Mirror {
 	public function get_settings() {
 		$settings = array(
 			array(
-				'title' 	=> __( 'Zap Mirror settings', 'woo-zap-mirror' ),
+				'title' 	=> __( 'Zap Settings', 'woo-zap-mirror' ),
 				'type' 		=> 'title',
 				'id' 		=> 'wc_zap_mirror_options',
 			),
 			array(
-				'title'		=> __( 'Mirror Page', 'woo-zap-mirror' ),
+				'title'		=> __( 'Mirror Site Page', 'woo-zap-mirror' ),
 				'id'		=> 'woocommerce_zap_page_id',
 				'type' 		=> 'single_select_page',
 				'default' 	=> '',
@@ -473,7 +473,7 @@ final class WC_Zap_Mirror {
 	}
 
 	/**
-	 * [mirror description]
+	 * [mirror]
 	 */
 	public function mirror() {
 		// XML
