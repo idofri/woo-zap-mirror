@@ -67,7 +67,7 @@ final class WC_Zap_Mirror {
 		add_action( 'admin_init', 								array( $this, 'check_environment' ) );
 		add_action( 'admin_notices', 							array( $this, 'admin_notices' ) );
 		add_action( 'admin_enqueue_scripts',					array( $this, 'admin_enqueue_scripts' ) );
-		add_filter( 'woocommerce_settings_tabs_array', 			array( $this, 'woocommerce_settings_tabs_array' ), 25 );
+		add_filter( 'woocommerce_settings_tabs_array', 			array( $this, 'add_settings_tab' ), 25 );
 		add_action( 'woocommerce_settings_tabs_zap_mirror', 	array( $this, 'show_settings_tab' ) );
 		add_action( 'woocommerce_update_options_zap_mirror', 	array( $this, 'update_settings_tab' ) );
 		add_action( 'woocommerce_admin_field_checklist',		array( $this, 'output_checklist_field' ) );
@@ -109,6 +109,15 @@ final class WC_Zap_Mirror {
 	}
 
 	/**
+	 * Get the plugin url.
+	 *
+	 * @return string
+	 */
+	public function plugin_url() {
+		return untrailingslashit( plugins_url( '/', __FILE__ ) );
+	}
+	
+	/**
 	 * Get the plugin path.
 	 *
 	 * @return string
@@ -136,6 +145,7 @@ final class WC_Zap_Mirror {
 	 *
 	 * @param string $class
 	 * @param string $message
+	 * @return void
 	 */
 	public function add_admin_notice( $class, $message ) {
 		$this->notices[] = array(
@@ -159,7 +169,7 @@ final class WC_Zap_Mirror {
 	 * Enqueue admin scripts and styles.
 	 */
 	public function admin_enqueue_scripts() {
-		 wp_enqueue_style( 'woo-zap-mirror', plugins_url( '/assets/css/style.css', __FILE__ ), array(), $this->get_version() );
+		wp_enqueue_style( 'woo-zap-mirror', plugins_url( '/assets/css/style.css', __FILE__ ), array(), $this->get_version() );
 	}
 
 	/**
@@ -191,6 +201,7 @@ final class WC_Zap_Mirror {
 	 * Add custom product tab.
 	 *
 	 * @param array $tabs
+	 * @return array
 	 */
 	public function add_product_data_tab( $tabs ) {
 		$tabs['zap'] = array(
@@ -210,6 +221,8 @@ final class WC_Zap_Mirror {
 		?><div id="zap_product_data" class="panel woocommerce_options_panel hidden">
 			<div class="options_group">
 				<?php
+				do_action( 'wc_zap_mirror_before_options' );
+				
 				woocommerce_wp_checkbox( array(
 					'id' 				=> '_wc_zap_disable',
 					'label' 			=> __( 'Hide Product', 'woo-zap-mirror' )
@@ -298,6 +311,8 @@ final class WC_Zap_Mirror {
 						'maxlength' => '255'
 					)
 				) );
+				
+				do_action( 'wc_zap_mirror_after_options' );
 				?>
 				<p class="form-field">
 					<label for="_wc_zap_product_image"><?php _e( 'Image', 'woo-zap-mirror' ); ?></label>
@@ -360,10 +375,10 @@ final class WC_Zap_Mirror {
 	/**
 	 * Add a new settings tab to the WooCommerce settings tabs array.
 	 *
-	 * @param  array $settings_tabs
+	 * @param array $settings_tabs
 	 * @return array
 	 */
-	public function woocommerce_settings_tabs_array( $settings_tabs ) {
+	public function add_settings_tab( $settings_tabs ) {
 		$settings_tabs[ 'zap_mirror' ] = __( 'Zap Mirror', 'woo-zap-mirror' );
 		return $settings_tabs;
 	}
@@ -379,7 +394,7 @@ final class WC_Zap_Mirror {
 	 * Uses the WooCommerce options API to save settings via the woocommerce_update_options() function.
 	 */
 	public function update_settings_tab(){
-		// Fix
+		// Allow empty array value
 		add_filter( 'woocommerce_admin_settings_sanitize_option_wc_zap_mirror_hide_terms', function( $value ) {
 			if ( is_null( $value ) ) {
 				$value = array();
@@ -427,7 +442,7 @@ final class WC_Zap_Mirror {
 	/**
 	 * Used to print the settings field of the custom-type checklist field.
 	 *
-	 * @param  array $value
+	 * @param array $value
 	 */
 	public function output_checklist_field( $value ) {
 		$field_description = WC_Admin_Settings::get_field_description( $value );
@@ -438,11 +453,18 @@ final class WC_Zap_Mirror {
 			<td class="forminp categorydiv">
 				<div id="product_cat-all" class="tabs-panel">
 					<ul id="product_catchecklist" data-wp-lists="list:product_cat" class="categorychecklist form-no-clear">
-						<?php echo str_replace( 'tax_input[product_cat]', $value['id'], wp_terms_checklist( wc_get_page_id( 'zap' ), array(
-							'selected_cats'	=> WC_Admin_Settings::get_option( $value['id'] ),
-							'taxonomy' 		=> 'product_cat',
-							'echo' 			=> false
-						) ) ); ?>
+						<?php echo str_replace(
+							'tax_input[product_cat]', 
+							$value['id'], 
+							wp_terms_checklist(
+								wc_get_page_id( 'zap' ), 
+								array(
+									'selected_cats'	=> WC_Admin_Settings::get_option( $value['id'] ),
+									'taxonomy' 		=> 'product_cat',
+									'echo' 			=> false
+								)
+							)
+						); ?>
 					</ul>
 				</div>
 				<?php echo $description; ?>
@@ -452,7 +474,6 @@ final class WC_Zap_Mirror {
 
 	/**
 	 * [mirror description]
-	 * @return [type] [description]
 	 */
 	public function mirror() {
 		// XML
@@ -462,8 +483,8 @@ final class WC_Zap_Mirror {
 				wp_die( __( 'Category is unavailable.', 'woo-zap-mirror' ) );
 			}
 			
-			// Products
-			$args = array(
+			// Fetch products
+			$args = apply_filters( 'wc_zap_mirror_query_args', array(
 				'post_type' 		=> 'product',
 				'posts_per_page' 	=> -1,
 				'tax_query' 		=> array(
@@ -487,7 +508,8 @@ final class WC_Zap_Mirror {
 						'compare' 	=> 'NOT EXISTS'
 					),
 				)
-			);
+			), $term_id );
+			
 			$products = new WP_Query( $args );
 			if ( $products->have_posts() ) {
 				$this->create_xml( $products );
@@ -506,9 +528,9 @@ final class WC_Zap_Mirror {
 	}
 
 	/**
-	 * [create_xml description]
-	 * @param  [type] $products [description]
-	 * @return [type]           [description]
+	 * [create_xml]
+	 *
+	 * @param WP_Query $products
 	 */
 	public function create_xml( $products ) {
 		header( "Content-Type: application/xml; charset=utf-8" );
