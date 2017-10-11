@@ -476,9 +476,11 @@ final class WC_Zap_Mirror {
 	 * [mirror]
 	 */
 	public function mirror() {
+		$exclude_ids = WC_Admin_Settings::get_option( 'wc_zap_mirror_hide_terms', array() );
+		
 		// XML
 		if ( $term_id = get_query_var( 'product_cat' ) ) {
-			$exclude_ids = WC_Admin_Settings::get_option( 'wc_zap_mirror_hide_terms' );
+			// bail early
 			if ( in_array( $term_id, $exclude_ids ) ) {
 				wp_die( __( 'Category is unavailable.', 'woo-zap-mirror' ) );
 			}
@@ -517,7 +519,7 @@ final class WC_Zap_Mirror {
 				wp_die( __( 'No available products.', 'woo-zap-mirror' ) );
 			}
 		// HTML Template
-		} elseif ( $terms = get_terms( 'product_cat', array( 'hide_empty' => 0 ) ) ) {
+		} elseif ( $terms = get_terms( 'product_cat', array( 'hide_empty' => 0, 'exclude_tree' => $exclude_ids ) ) ) {
 			wc_get_template( 'zap/mirror.php', array( 'terms' => $terms ), null, $this->plugin_path() . '/templates/' );
 		} else {
 			wp_die( __( 'No categories found.', 'woo-zap-mirror' ) );
