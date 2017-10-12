@@ -389,14 +389,14 @@ final class WC_Zap_Mirror {
 	/**
 	 * Uses the WooCommerce admin fields API to output settings via the woocommerce_admin_fields() function.
 	 */
-	public function show_settings_tab(){
+	public function show_settings_tab() {
 		woocommerce_admin_fields( $this->get_settings() );
 	}
 
 	/**
 	 * Uses the WooCommerce options API to save settings via the woocommerce_update_options() function.
 	 */
-	public function update_settings_tab(){
+	public function update_settings_tab() {
 		// Allow empty array value
 		add_filter( 'woocommerce_admin_settings_sanitize_option_wc_zap_mirror_excluded_term_ids', function( $value ) {
 			if ( is_null( $value ) ) {
