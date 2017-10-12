@@ -1,9 +1,9 @@
 === Woo Zap Mirror ===
 Contributors: idofri
-Tags: WooCommerce, zap, index, mirror, xml
+Tags: WooCommerce, zap, index, mirror site, XML
 Requires at least: 3.0
-Tested up to: 4.6
-Stable tag: 1.2.2
+Tested up to: 4.8
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,7 +13,7 @@ Creates Zap Mirror site for WooCommerce.
 
 = About the plugin =
 
-The plugin creates a mirror site for [Zap](http://www.zap.co.il/) which allows it to better index you WooCommerce store.
+The plugin creates a mirror site for [Zap](http://www.zap.co.il/) which allows it to better index your WooCommerce store.
 
 == Installation ==
 
@@ -25,7 +25,7 @@ The plugin creates a mirror site for [Zap](http://www.zap.co.il/) which allows i
 
 = Minimum Requirements =
 * WordPress version 3.0 or greater.
-* PHP version 5.2.4 or greater.
+* PHP version 5.3.0 or greater.
 * MySQL version 5.0 or greater.
 
 = Recommended Requirements =
@@ -45,32 +45,19 @@ The plugin creates a mirror site for [Zap](http://www.zap.co.il/) which allows i
 
 = What does the plugin do? =
 
-The plugin will create a mirror site of your woocommerce shop for Zap.
-
-= How do I access the mirror site? =
-
-By default the mirror site will be avaiable @ http://www.YOUR-DOMAIN.com/zap/
-
-= Can I change the mirror site address? =
-
-Yes. The mirror site URL address can be changed: WooCommerce => Zap Settings => General Settings.
+The plugin will create a mirror site of your WooCommerce shop for Zap.
 
 = How do I set product properties for the mirror site? =
 
-Each product will have a fully customizable settings box titled "Zap Settings".
-
-= Why does some fields contain values as placeholders? =
-
-Some fields are already being managed @ the product level, so to save you the effort I've placed their values as placeholders. 
-You can then convert these placeholders to values by pressing on any non-alphnumeric key.
+Each product will have a fully customizable settings tab titled "Zap Settings".
 
 = Can I exclude specific products from the mirror site? =
 
-Yes. simply check the "Hide Product" checkbox @ the top of the settings box.
+Yes. simply check the "Hide Product" checkbox @ the top of the settings tab.
 
 = Can I exclude specific categories from the mirror site? =
 
-Yes. simply check the categories you wish to hide on the plugin's settings page: WooCommerce => Zap Settings => Hide Categories.
+Yes. simply check the categories you wish to hide on the plugin's settings page: WooCommerce => Settings => Zap Mirror Site => Hide Categories.
 
 = What is the cost for the gateway plugin? =
 
@@ -81,6 +68,10 @@ This plugin is a FREE download.
 It is advisable to exclude and prevent the mirror site from being cached in any way. 
 
 == Changelog ==
+
+= 1.3.0 =
+* Complete restructuring of the plugin.
+* Added action and filter hooks.
 
 = 1.2.2 =
 * Changed template redirection logic (again).
@@ -164,3 +155,8 @@ It is advisable to exclude and prevent the mirror site from being cached in any 
 = 1.0.2 =
 * Fixed OOP syntax.
 * Reveresed to template_redirect();
+
+== Upgrade Notice ==
+
+= 1.3 =
+The upgrade requires some new configuration. The configuration from version 1.2.2 will not be fully preserved.

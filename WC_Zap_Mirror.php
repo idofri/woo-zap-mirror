@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 Plugin Name: Woo Zap Mirror
 Plugin URI:  https://wordpress.org/plugins/woo-zap-mirror/
 Description: Creates a mirror site for Zap.
-Version:     1.3
+Version:     1.3.0
 Author:      Ido Friedlander
 Author URI:  https://profiles.wordpress.org/idofri/
 Text Domain: woo-zap-mirror
@@ -192,7 +192,8 @@ final class WC_Zap_Mirror {
 	 */
 	public function template_loader( $template ) {
 		if (  is_page( wc_get_page_id( 'zap' ) ) ) {
-			$this->mirror();
+			$this->mirror_site();
+			exit;
 		}
 		return $template;
 	}
@@ -395,7 +396,7 @@ final class WC_Zap_Mirror {
 	 */
 	public function update_settings_tab(){
 		// Allow empty array value
-		add_filter( 'woocommerce_admin_settings_sanitize_option_wc_zap_mirror_hide_terms', function( $value ) {
+		add_filter( 'woocommerce_admin_settings_sanitize_option_wc_zap_mirror_excluded_term_ids', function( $value ) {
 			if ( is_null( $value ) ) {
 				$value = array();
 			}
@@ -428,7 +429,7 @@ final class WC_Zap_Mirror {
 			array(
 				'title' 	=> __( 'Hide Categories', 'woo-zap-mirror' ),
 				'type' 		=> 'checklist',
-				'id' 		=> 'wc_zap_mirror_hide_terms',
+				'id' 		=> 'wc_zap_mirror_excluded_term_ids',
 				'desc_tip' 	=> __( 'Check the categories you wish to hide on the mirror site', 'woo-zap-mirror' ),
 			),
 			array(
@@ -471,66 +472,108 @@ final class WC_Zap_Mirror {
 			</td>
 		</tr><?php
 	}
-
+	
 	/**
-	 * [mirror]
+	 * Get products by term id.
+	 *
+	 * @param int $term_id
+	 * @param array $exclude_ids
+	 * @return WP_Query
 	 */
-	public function mirror() {
-		$exclude_ids = WC_Admin_Settings::get_option( 'wc_zap_mirror_hide_terms', array() );
+	public function get_products( $term_id, $exclude_ids = array() ) {
+		$args = array(
+			'post_type' 		=> 'product',
+			'posts_per_page' 	=> -1,
+			'tax_query' 		=> array(
+				array(
+					'taxonomy' 			=> 'product_cat',
+					'field' 			=> 'term_id',
+					'terms' 			=> $term_id,
+					'include_children'	=> false,
+					'operator' 			=> 'IN'
+				)
+			),
+			'meta_query' => array(
+				'relation' => 'OR',
+				array(
+					'key'     	=> '_wc_zap_disable',
+					'value'		=> 'yes',
+					'compare' 	=> '!=',
+				),
+				array(
+					'key' 		=> '_wc_zap_disable',
+					'compare' 	=> 'NOT EXISTS'
+				)
+			)
+		);
+		
+		/**
+		 * Filters the arguments passed to each WP_Query instance.
+		 */
+		$args = apply_filters( 'wc_zap_mirror_wp_query', $args, $term_id );
+		
+		/**
+		 * Filters the arguments passed to a specific WP_Query instance.
+		 */
+		$args = apply_filters( "wc_zap_mirror_wp_query_{$term_id}", $args, $term_id );
+		
+		return new WP_Query( $args );
+	}
+	
+	/**
+	 * Get product categories.
+	 *
+	 * @param array $exclude_ids
+	 * @return array
+	 */
+	public function get_terms( $exclude_ids = array() ) {
+		$args = array(
+			'taxonomy' 		=> 'product_cat',
+			'hide_empty' 	=> 0,
+			'exclude_tree' 	=> $exclude_ids
+		);
+		
+		/**
+		 * Filters the arguments passed to the get_terms() function.
+		 */
+		$args = apply_filters( 'wc_zap_mirror_get_terms', $args, $exclude_ids );
+		
+		return get_terms( $args );
+	}
+	
+	/**
+	 * Mirror Site handler.
+	 */
+	public function mirror_site() {
+		$exclude_ids = apply_filters( 'wc_zap_mirror_excluded_term_ids', WC_Admin_Settings::get_option( 'wc_zap_mirror_excluded_term_ids', array() ) );
 		
 		// XML
 		if ( $term_id = get_query_var( 'product_cat' ) ) {
-			// bail early
+			// Bail out prior to query initiation if term was excluded.
 			if ( in_array( $term_id, $exclude_ids ) ) {
-				wp_die( __( 'Category is unavailable.', 'woo-zap-mirror' ) );
+				wp_die( __( 'No categories found.', 'woo-zap-mirror' ) );
 			}
 			
-			// Fetch products
-			$args = apply_filters( 'wc_zap_mirror_query_args', array(
-				'post_type' 		=> 'product',
-				'posts_per_page' 	=> -1,
-				'tax_query' 		=> array(
-					array(
-						'taxonomy' 			=> 'product_cat',
-						'field' 			=> 'term_id',
-						'terms' 			=> $term_id,
-						'include_children'	=> false,
-						'operator' 			=> 'IN'
-					),
-				),
-				'meta_query' => array(
-					'relation' => 'OR',
-					array(
-						'key'     	=> '_wc_zap_disable',
-						'value'		=> 'yes',
-						'compare' 	=> '!=',
-					),
-					array(
-						'key' 		=> '_wc_zap_disable',
-						'compare' 	=> 'NOT EXISTS'
-					),
-				)
-			), $term_id );
-			
-			$products = new WP_Query( $args );
+			$products = $this->get_products( $term_id, $exclude_ids );
 			if ( $products->have_posts() ) {
 				$this->create_xml( $products );
 			} else {
 				wp_die( __( 'No available products.', 'woo-zap-mirror' ) );
 			}
+			
+			return;
+			
 		// HTML Template
-		} elseif ( $terms = get_terms( 'product_cat', array( 'hide_empty' => 0, 'exclude_tree' => $exclude_ids ) ) ) {
+		} elseif ( $terms = $this->get_terms( $exclude_ids ) ) {
 			wc_get_template( 'zap/mirror.php', array( 'terms' => $terms ), null, $this->plugin_path() . '/templates/' );
-		} else {
-			wp_die( __( 'No categories found.', 'woo-zap-mirror' ) );
+			return;
 		}
-
-		// EOF
-		exit;
+		
+		wp_die( __( 'No categories found.', 'woo-zap-mirror' ) );
 	}
 
 	/**
-	 * [create_xml]
+	 * Output XML.
 	 *
 	 * @param WP_Query $products
 	 */
@@ -561,12 +604,20 @@ final class WC_Zap_Mirror {
 			$node->IMAGE 			= $product->get_image_id() ? wp_get_attachment_url( $product->get_image_id() ) : wc_placeholder_img_src();
 			$node->TAX 				= 1;
 			
-			// Fires after node properties have been set.
+			/**
+			 * Fires after each node properties have been set.
+			 */
 			do_action_ref_array( 'wc_zap_mirror_xml_node', array( &$node, $product, $post ) );
+			
+			/**
+			 * Fires after specific node properties have been set.
+			 */
 			do_action_ref_array( "wc_zap_mirror_xml_node_{$post->ID}", array( &$node, $product, $post ) );
 		}
 		
-		// Fires after XML is ready.
+		/**
+		 * Fires after XML is complete.
+		 */
 		do_action_ref_array( 'wc_zap_mirror_xml', array( &$xml, $products ) );
 
 		echo $xml->asXML();
