@@ -208,7 +208,7 @@ final class WC_Zap_Mirror {
 		$tabs['zap'] = array(
 			'label' => __( 'Zap Settings', 'woo-zap-mirror' ),
 			'target' => 'zap_product_data',
-			'class' => '',
+			'class' => ''
 		);
 	    return $tabs;
 	}
@@ -415,7 +415,7 @@ final class WC_Zap_Mirror {
 			array(
 				'title' 	=> __( 'Zap Settings', 'woo-zap-mirror' ),
 				'type' 		=> 'title',
-				'id' 		=> 'wc_zap_mirror_options',
+				'id' 		=> 'wc_zap_mirror_options'
 			),
 			array(
 				'title'		=> __( 'Mirror Site Page', 'woo-zap-mirror' ),
@@ -424,17 +424,17 @@ final class WC_Zap_Mirror {
 				'default' 	=> '',
 				'class' 	=> 'wc-enhanced-select-nostd',
 				'css' 		=> 'min-width:300px;',
-				'desc_tip' 	=> __( 'This sets the zap mirror page of your shop.', 'woo-zap-mirror' ),
+				'desc_tip' 	=> __( 'This sets the zap mirror page of your shop.', 'woo-zap-mirror' )
 			),
 			array(
 				'title' 	=> __( 'Hide Categories', 'woo-zap-mirror' ),
 				'type' 		=> 'checklist',
 				'id' 		=> 'wc_zap_mirror_excluded_term_ids',
-				'desc_tip' 	=> __( 'Check the categories you wish to hide on the mirror site', 'woo-zap-mirror' ),
+				'desc_tip' 	=> __( 'Check the categories you wish to hide on the mirror site', 'woo-zap-mirror' )
 			),
 			array(
 				'type' 		=> 'sectionend',
-				'id' 		=> 'wc_zap_mirror_options',
+				'id' 		=> 'wc_zap_mirror_options'
 			)
 		);
 		return apply_filters( 'wc_zap_mirror_settings', $settings );
@@ -498,7 +498,7 @@ final class WC_Zap_Mirror {
 				array(
 					'key'     	=> '_wc_zap_disable',
 					'value'		=> 'yes',
-					'compare' 	=> '!=',
+					'compare' 	=> '!='
 				),
 				array(
 					'key' 		=> '_wc_zap_disable',
