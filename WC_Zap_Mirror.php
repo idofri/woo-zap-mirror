@@ -76,6 +76,7 @@ final class WC_Zap_Mirror {
 		add_action( 'woocommerce_process_product_meta', 		array( $this, 'process_product_meta' ) );
 		add_filter( 'query_vars', 								array( $this, 'add_custom_query_var' ) );
 		add_filter( 'template_include', 						array( $this, 'template_loader' ) );
+		add_action( 'plugins_loaded', 							array( $this, 'load_plugin_textdomain' ) );
 	}
 
 	/**
@@ -108,6 +109,13 @@ final class WC_Zap_Mirror {
 		}
 	}
 
+	/**
+	 * Localization.
+	 */
+	public function load_plugin_textdomain() {
+		load_plugin_textdomain( 'woo-zap-mirror' );
+	}
+	
 	/**
 	 * Get the plugin url.
 	 *
@@ -326,7 +334,7 @@ final class WC_Zap_Mirror {
 	}
 
 	/**
-	 * Save settings
+	 * Save settings.
 	 *
 	 * @param int $post_id
 	 * @return void
