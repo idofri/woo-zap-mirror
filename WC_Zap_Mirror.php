@@ -306,6 +306,8 @@ final class WC_Zap_Mirror {
 				
 				woocommerce_wp_textarea_input( array(
 					'id' 				=> '_wc_zap_product_description',
+					'rows'				=> 5,
+					'style' 			=> 'height: auto;',
 					'label' 			=> __( 'Product Description', 'woo-zap-mirror' ),
 					'description' 		=> __( 'Maximum 255 characters', 'woo-zap-mirror' ),
 					'custom_attributes'	=> array(
@@ -423,7 +425,7 @@ final class WC_Zap_Mirror {
 				'type' 		=> 'single_select_page',
 				'default' 	=> '',
 				'class' 	=> 'wc-enhanced-select-nostd',
-				'css' 		=> 'min-width:300px;',
+				'css' 		=> 'min-width: 300px;',
 				'desc_tip' 	=> __( 'This sets the zap mirror page of your shop.', 'woo-zap-mirror' )
 			),
 			array(
