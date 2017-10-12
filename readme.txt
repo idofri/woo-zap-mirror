@@ -35,11 +35,9 @@ The plugin creates a mirror site for [Zap](http://www.zap.co.il/) which allows i
 
 == Screenshots ==
 
-1. Product configuration.
+1. Plugin settings.
 
-2. Customize mirror site URL address.
-
-3. Hide specific categories.
+2. Product settings.
 
 == Frequently Asked Questions ==
 
