@@ -515,7 +515,7 @@ final class WC_Zap_Mirror {
 		/**
 		 * Filters the arguments passed to a specific WP_Query instance.
 		 */
-		$args = apply_filters( "wc_zap_mirror_wp_query_{$term_id}", $args, $term_id );
+		$args = apply_filters( "wc_zap_mirror_wp_query_{$term_id}", $args );
 		
 		return new WP_Query( $args );
 	}
