@@ -193,7 +193,7 @@ final class WC_Zap_Mirror {
 	public function template_loader( $template ) {
 		if (  is_page( wc_get_page_id( 'zap' ) ) ) {
 			$this->mirror_site();
-			exit;
+			return;
 		}
 		return $template;
 	}
