@@ -217,7 +217,7 @@ final class WC_Zap_Mirror {
 	 * Contents of the Zap settings product tab.
 	 */
 	public function add_product_data_panel() {
-		global $post, $woocommerce;
+		global $post;
 
 		?><div id="zap_product_data" class="panel woocommerce_options_panel hidden">
 			<div class="options_group">
