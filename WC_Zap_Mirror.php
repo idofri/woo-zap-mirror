@@ -70,7 +70,7 @@ final class WC_Zap_Mirror {
 		add_filter( 'woocommerce_settings_tabs_array', 			array( $this, 'add_settings_tab' ), 25 );
 		add_action( 'woocommerce_settings_tabs_zap_mirror', 	array( $this, 'show_settings_tab' ) );
 		add_action( 'woocommerce_update_options_zap_mirror', 	array( $this, 'update_settings_tab' ) );
-		add_action( 'woocommerce_admin_field_checklist',		array( $this, 'output_checklist_field' ) );
+		add_action( 'woocommerce_admin_field_checklist',		array( $this, 'show_checklist_field' ) );
 		add_action( 'woocommerce_product_data_tabs', 			array( $this, 'add_product_data_tab' ) );
 		add_action( 'woocommerce_product_data_panels', 			array( $this, 'add_product_data_panel' ) );
 		add_action( 'woocommerce_process_product_meta', 		array( $this, 'process_product_meta' ) );
@@ -445,7 +445,7 @@ final class WC_Zap_Mirror {
 	 *
 	 * @param array $value
 	 */
-	public function output_checklist_field( $value ) {
+	public function show_checklist_field( $value ) {
 		$field_description = WC_Admin_Settings::get_field_description( $value );
 		extract( $field_description );
 
@@ -549,7 +549,7 @@ final class WC_Zap_Mirror {
 		
 		// XML
 		if ( $term_id = get_query_var( 'product_cat' ) ) {
-			// Bail out prior to query initiation if term was excluded.
+			// Bail out prior to query initiation if term is excluded.
 			if ( in_array( $term_id, $exclude_ids ) ) {
 				wp_die( __( 'No categories found.', 'woo-zap-mirror' ) );
 			}
