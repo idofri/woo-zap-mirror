@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 Plugin Name: Woo Zap Mirror
 Plugin URI:  https://wordpress.org/plugins/woo-zap-mirror/
 Description: Creates a mirror site for Zap.
-Version:     1.3.0
+Version:     1.3.1
 Author:      Ido Friedlander
 Author URI:  https://profiles.wordpress.org/idofri/
 Text Domain: woo-zap-mirror

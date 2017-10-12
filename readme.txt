@@ -3,7 +3,7 @@ Contributors: idofri
 Tags: WooCommerce, zap, index, mirror site, XML
 Requires at least: 3.0
 Tested up to: 4.8
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,9 @@ This plugin is a FREE download.
 It is advisable to exclude and prevent the mirror site from being cached in any way. 
 
 == Changelog ==
+
+= 1.3.1 =
+* Added missing localization function.
 
 = 1.3.0 =
 * Complete restructuring of the plugin.
