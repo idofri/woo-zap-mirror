@@ -199,7 +199,7 @@ final class WC_Zap_Mirror {
 	 * @return string
 	 */
 	public function template_loader( $template ) {
-		if (  is_page( wc_get_page_id( 'zap' ) ) ) {
+		if ( is_page( wc_get_page_id( 'zap' ) ) ) {
 			$this->mirror_site();
 			return;
 		}
