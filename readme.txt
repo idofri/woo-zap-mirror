@@ -3,7 +3,7 @@ Contributors: idofri
 Tags: WooCommerce, zap, index, mirror site, XML
 Requires at least: 3.0
 Tested up to: 4.8
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,11 @@ This plugin is a FREE download.
 It is advisable to exclude and prevent the mirror site from being cached in any way. 
 
 == Changelog ==
+
+= 1.3.2 =
+* Fixed attribute escaping bug.
+* Added new action hooks.
+* Added Yoast SEO action hook.
 
 = 1.3.1 =
 * Added missing localization function.
