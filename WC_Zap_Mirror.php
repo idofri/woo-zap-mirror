@@ -77,6 +77,7 @@ final class WC_Zap_Mirror {
 		add_filter( 'query_vars', 								array( $this, 'add_custom_query_var' ) );
 		add_filter( 'template_include', 						array( $this, 'template_loader' ) );
 		add_action( 'plugins_loaded', 							array( $this, 'load_plugin_textdomain' ) );
+		add_action( 'wc_zap_mirror_head',						array( $this, 'wpseo_head' ) );
 	}
 
 	/**
@@ -108,7 +109,14 @@ final class WC_Zap_Mirror {
 			$this->add_admin_notice( $class, $message );
 		}
 	}
-
+	
+	/**
+	 * Yoast SEO.
+	 */
+	public function wpseo_head() {
+		do_action( 'wpseo_head' );
+	}
+	
 	/**
 	 * Localization.
 	 */
