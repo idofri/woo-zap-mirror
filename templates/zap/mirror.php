@@ -28,8 +28,10 @@ $nodes = ob_get_clean();
 	<title><?php wp_title(''); ?></title>
 	<link rel="stylesheet" href="<?php echo WC_Zap_Mirror()->plugin_url(); ?>/assets/dtree/dtree.css" type="text/css" />
 	<script type="text/javascript" src="<?php echo WC_Zap_Mirror()->plugin_url(); ?>/assets/dtree/dtree.js"></script>
+	<?php do_action( 'wc_zap_mirror_head' ); ?>
 </head>
 <body <?php body_class(); ?>>
+	<?php do_action( 'wc_zap_mirror_body' ); ?>
 	<script type="text/javascript">
 		d = new dTree('d');
 		for (var key in d.icon) {
