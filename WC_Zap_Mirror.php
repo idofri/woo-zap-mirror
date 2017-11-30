@@ -602,11 +602,11 @@ final class WC_Zap_Mirror {
 		$xml->addAttribute( 'URL', home_url() );
 		$xml->addAttribute( 'DATE', date_i18n( 'd/m/Y' ) );
 		$xml->addAttribute( 'TIME', date_i18n( 'H:i:s' ) );
-		$xml->addChild( 'PRODUCTS' );
+		$parent = $xml->addChild( 'PRODUCTS' );
 
 		foreach ( $products->posts as $post ) {
 			$product = wc_get_product( $post->ID );
-			$node = $xml->addchild( 'PRODUCT' );
+			$node = $parent->addchild( 'PRODUCT' );
 			$node->addAttribute( 'NUM', $product->get_id() );
 			$node->PRODUCT_URL 		= add_query_arg( 'p', $post->ID, trailingslashit( home_url() ) );
 			$node->PRODUCT_NAME 	= $product->get_meta( '_wc_zap_product_name' );
