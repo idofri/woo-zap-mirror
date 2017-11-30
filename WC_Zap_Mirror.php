@@ -75,7 +75,7 @@ final class WC_Zap_Mirror {
 		add_action( 'woocommerce_product_data_panels', 			array( $this, 'add_product_data_panel' ) );
 		add_action( 'woocommerce_process_product_meta', 		array( $this, 'process_product_meta' ) );
 		add_filter( 'query_vars', 								array( $this, 'add_custom_query_var' ) );
-		add_filter( 'template_include', 						array( $this, 'template_loader' ) );
+		add_filter( 'template_include', 						array( $this, 'template_loader' ), 0 );
 		add_action( 'plugins_loaded', 							array( $this, 'load_plugin_textdomain' ) );
 		add_action( 'wc_zap_mirror_head',						array( $this, 'wpseo_head' ) );
 	}
