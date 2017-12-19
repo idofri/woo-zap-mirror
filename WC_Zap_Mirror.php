@@ -251,7 +251,8 @@ final class WC_Zap_Mirror {
 				woocommerce_wp_text_input( array(
 					'id' 				=> '_wc_zap_product_name',
 					'label' 			=> __( 'Product Name', 'woo-zap-mirror' ),
-					'type' 				=> 'text'
+					'type' 				=> 'text',
+					'description' 		=> __( 'Maximum 40 characters', 'woo-zap-mirror' )
 				) );
 				
 				woocommerce_wp_text_input( array(
@@ -358,7 +359,7 @@ final class WC_Zap_Mirror {
 		}
 
 		if ( isset( $_POST['_wc_zap_product_name'] ) ) {
-			update_post_meta( $post_id, '_wc_zap_product_name', wc_clean( mb_substr( $_POST['_wc_zap_product_name'], 0, 30, "utf-8" ) ) );
+			update_post_meta( $post_id, '_wc_zap_product_name', wc_clean( mb_substr( $_POST['_wc_zap_product_name'], 0, 40, "utf-8" ) ) );
 		}
 
 		if ( isset( $_POST['_wc_zap_product_model'] ) ) {
