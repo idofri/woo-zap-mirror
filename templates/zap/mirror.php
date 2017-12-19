@@ -7,20 +7,6 @@
 
 defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 
-ob_start();
-foreach ( $terms as $term ) {
-	$id		= $term->term_id;
-	$pid	= $term->parent;
-	$name	= esc_attr( $term->name );
-	$url	= add_query_arg( 'product_cat', $term->term_id, wc_get_page_permalink( 'zap' ) );
-	echo "d.add({$id}, {$pid}, '{$name}', '{$url}');\n";
-	// Indentation
-	if ( $term !== end( $terms ) ) {
-		echo "\t\t";
-	}
-}
-$nodes = ob_get_clean();
-
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>

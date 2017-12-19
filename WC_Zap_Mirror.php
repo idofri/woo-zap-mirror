@@ -587,7 +587,21 @@ final class WC_Zap_Mirror {
 			
 		// HTML Template
 		} elseif ( $terms = $this->get_terms( $exclude_ids ) ) {
-			wc_get_template( 'zap/mirror.php', array( 'terms' => $terms ), null, $this->plugin_path() . '/templates/' );
+			ob_start();
+			foreach ( $terms as $term ) {
+				$id		= $term->term_id;
+				$pid	= $term->parent;
+				$name	= esc_attr( $term->name );
+				$url	= add_query_arg( 'product_cat', $term->term_id, wc_get_page_permalink( 'zap' ) );
+				echo "d.add({$id}, {$pid}, '{$name}', '{$url}');\n";
+				// Indentation
+				if ( $term !== end( $terms ) ) {
+					echo "\t\t";
+				}
+			}
+			$nodes = ob_get_clean();
+			
+			wc_get_template( 'zap/mirror.php', array( 'nodes' => $nodes ), null, $this->plugin_path() . '/templates/' );
 			return;
 		}
 		
