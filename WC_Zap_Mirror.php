@@ -15,10 +15,16 @@ defined( 'ABSPATH' ) || exit;
 
 /** @class WC_Zap_Mirror */
 class WC_Zap_Mirror {
-
+	
+	/**
+	 * Woo Zap Mirror version.
+	 * @var string
+	 */
+	public $version = '1.3.6';
+	
 	/** The single instance of the class. */
 	protected static $_instance = null;
-
+	
 	/**
 	 * Notices (array)
 	 * @var array
@@ -65,7 +71,7 @@ class WC_Zap_Mirror {
 	/**
 	 * Constructor.
 	 */
-	protected function __construct() {
+	private function __construct() {
 		add_action( 'admin_init', 								array( $this, 'check_environment' ) );
 		add_action( 'admin_notices', 							array( $this, 'admin_notices' ) );
 		add_action( 'admin_enqueue_scripts',					array( $this, 'admin_enqueue_scripts' ) );
@@ -143,20 +149,6 @@ class WC_Zap_Mirror {
 	public function plugin_path() {
 		return untrailingslashit( plugin_dir_path( __FILE__ ) );
 	}
-	
-	/**
-	 * Returns current plugin version.
-	 *
-	 * @return string Plugin version
-	 */
-	protected function get_version() {
-		if ( ! function_exists( 'get_plugins' ) ) {
-			require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-		}
-		$plugin_folder = get_plugins( '/' . plugin_basename( dirname( __FILE__ ) ) );
-		$plugin_file = basename( __FILE__ );
-		return $plugin_folder[ $plugin_file ]['Version'];
-	}
 
 	/**
 	 * Add admin notices.
@@ -187,7 +179,7 @@ class WC_Zap_Mirror {
 	 * Enqueue admin scripts and styles.
 	 */
 	public function admin_enqueue_scripts() {
-		wp_enqueue_style( 'woo-zap-mirror', plugins_url( '/assets/css/style.css', __FILE__ ), array(), $this->get_version() );
+		wp_enqueue_style( 'woo-zap-mirror', plugins_url( '/assets/css/style.css', __FILE__ ), array(), $this->version );
 	}
 
 	/**
