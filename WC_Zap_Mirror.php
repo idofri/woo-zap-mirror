@@ -262,10 +262,12 @@ class WC_Zap_Mirror {
 					'type' 				=> 'text'
 				) );
 				
+				$productCode = get_post_meta( $post->ID, '_wc_zap_productcode', true );
 				woocommerce_wp_text_input( array(
 					'id' 				=> '_wc_zap_productcode',
 					'label' 			=> __( 'Product Code', 'woo-zap-mirror' ),
-					'type' 				=> 'text'
+					'type' 				=> 'text',
+					'value'				=> $productCode ? $productCode : $post->ID
 				) );
 				
 				woocommerce_wp_text_input( array(
