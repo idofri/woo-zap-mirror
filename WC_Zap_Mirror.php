@@ -74,18 +74,18 @@ class WC_Zap_Mirror {
 	private function __construct() {
 		add_action( 'admin_init', 								array( $this, 'check_environment' ) );
 		add_action( 'admin_notices', 							array( $this, 'admin_notices' ) );
+		add_action( 'plugins_loaded', 							array( $this, 'load_plugin_textdomain' ) );
+		add_action( 'wc_zap_mirror_head',						array( $this, 'wpseo_head' ) );
 		add_action( 'admin_enqueue_scripts',					array( $this, 'admin_enqueue_scripts' ) );
-		add_filter( 'woocommerce_settings_tabs_array', 			array( $this, 'add_settings_tab' ), 25 );
 		add_action( 'woocommerce_settings_tabs_zap_mirror', 	array( $this, 'show_settings_tab' ) );
 		add_action( 'woocommerce_update_options_zap_mirror', 	array( $this, 'update_settings_tab' ) );
 		add_action( 'woocommerce_admin_field_checklist',		array( $this, 'show_checklist_field' ) );
 		add_action( 'woocommerce_product_data_tabs', 			array( $this, 'add_product_data_tab' ) );
 		add_action( 'woocommerce_product_data_panels', 			array( $this, 'add_product_data_panel' ) );
 		add_action( 'woocommerce_process_product_meta', 		array( $this, 'process_product_meta' ) );
+		add_filter( 'woocommerce_settings_tabs_array', 			array( $this, 'add_settings_tab' ), 25 );
 		add_filter( 'query_vars', 								array( $this, 'add_custom_query_var' ) );
 		add_filter( 'template_include', 						array( $this, 'template_loader' ), 0 );
-		add_action( 'plugins_loaded', 							array( $this, 'load_plugin_textdomain' ) );
-		add_action( 'wc_zap_mirror_head',						array( $this, 'wpseo_head' ) );
 	}
 
 	/**
