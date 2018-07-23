@@ -10,11 +10,11 @@ defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
-	<meta charset="<?php bloginfo( 'charset' ); ?>" />
-	<title><?php wp_title(''); ?></title>
-	<link rel="stylesheet" href="<?php echo WC_Zap_Mirror()->plugin_url(); ?>/assets/dtree/dtree.css" type="text/css" />
-	<script type="text/javascript" src="<?php echo WC_Zap_Mirror()->plugin_url(); ?>/assets/dtree/dtree.js"></script>
-	<?php do_action( 'wc_zap_mirror_head' ); ?>
+<meta charset="<?php bloginfo( 'charset' ); ?>" />
+<title><?php wp_title(''); ?></title>
+<link rel="stylesheet" href="<?php echo WC_Zap_Mirror()->plugin_url(); ?>/assets/dtree/dtree.css" type="text/css" />
+<script type="text/javascript" src="<?php echo WC_Zap_Mirror()->plugin_url(); ?>/assets/dtree/dtree.js"></script>
+<?php do_action( 'wc_zap_mirror_head' ); ?>
 </head>
 <body <?php body_class(); ?>>
 	<?php do_action( 'wc_zap_mirror_body' ); ?>
