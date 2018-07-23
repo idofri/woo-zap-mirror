@@ -1,6 +1,4 @@
 <?php
-defined( 'ABSPATH' ) || exit; // Exit if accessed directly
-
 /*
 Plugin Name: Woo Zap Mirror
 Plugin URI:  https://wordpress.org/plugins/woo-zap-mirror/
@@ -9,10 +7,14 @@ Version:     1.3.6
 Author:      Ido Friedlander
 Author URI:  https://profiles.wordpress.org/idofri/
 Text Domain: woo-zap-mirror
+WC requires at least: 3.0.0
 */
 
+// Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /** @class WC_Zap_Mirror */
-final class WC_Zap_Mirror {
+class WC_Zap_Mirror {
 
 	/** The single instance of the class. */
 	protected static $_instance = null;
@@ -269,7 +271,13 @@ final class WC_Zap_Mirror {
 				) );
 				
 				woocommerce_wp_text_input( array(
-					'id' 				=> '_wc_zap_product_catalog_number',
+					'id' 				=> '_wc_zap_productcode',
+					'label' 			=> __( 'Product Code', 'woo-zap-mirror' ),
+					'type' 				=> 'text'
+				) );
+				
+				woocommerce_wp_text_input( array(
+					'id' 				=> '_wc_zap_product_currency',
 					'value'				=> 'ILS',
 					'label' 			=> __( 'Currency', 'woo-zap-mirror' ),
 					'type' 				=> 'text',
@@ -372,6 +380,10 @@ final class WC_Zap_Mirror {
 
 		if ( isset( $_POST['_wc_zap_product_catalog_number'] ) ) {
 			update_post_meta( $post_id, '_wc_zap_product_catalog_number', wc_clean( $_POST['_wc_zap_product_catalog_number'] ) );
+		}
+		
+		if ( isset( $_POST['_wc_zap_productcode'] ) ) {
+			update_post_meta( $post_id, '_wc_zap_productcode', wc_clean( $_POST['_wc_zap_productcode'] ) );
 		}
 
 		if ( isset( $_POST['_wc_zap_product_price'] ) ) {
@@ -499,10 +511,9 @@ final class WC_Zap_Mirror {
 	 * Get products by term id.
 	 *
 	 * @param int $term_id
-	 * @param array $exclude_ids
 	 * @return WP_Query
 	 */
-	public function get_products( $term_id, $exclude_ids = array() ) {
+	public function get_products( $term_id ) {
 		$args = array(
 			'post_type' 		=> 'product',
 			'posts_per_page' 	=> -1,
@@ -576,7 +587,7 @@ final class WC_Zap_Mirror {
 				wp_die( __( 'No categories found.', 'woo-zap-mirror' ) );
 			}
 			
-			$products = $this->get_products( $term_id, $exclude_ids );
+			$products = $this->get_products( $term_id );
 			if ( $products->have_posts() ) {
 				$this->create_xml( $products );
 			} else {
@@ -624,13 +635,15 @@ final class WC_Zap_Mirror {
 
 		foreach ( $products->posts as $post ) {
 			$product = wc_get_product( $post->ID );
+			$productCode = $product->get_meta( '_wc_zap_productcode' );
 			$node = $parent->addchild( 'PRODUCT' );
 			$node->addAttribute( 'NUM', $product->get_id() );
-			$node->PRODUCT_URL 		= add_query_arg( 'p', $post->ID, trailingslashit( home_url() ) );
+			$node->PRODUCT_URL 		= wp_get_shortlink( $post->ID );
 			$node->PRODUCT_NAME 	= $product->get_meta( '_wc_zap_product_name' );
 			$node->MODEL 			= $product->get_meta( '_wc_zap_product_model' );
 			$node->DETAILS 			= $product->get_meta( '_wc_zap_product_description' );
 			$node->CATALOG_NUMBER	= $product->get_meta( '_wc_zap_product_catalog_number' );
+			$node->PRODUCTCODE		= $productCode ? $productCode : $product->get_id();
 			$node->CURRENCY 		= 'ILS';
 			$node->PRICE 			= $product->get_meta( '_wc_zap_product_price' );
 			$node->SHIPMENT_COST 	= $product->get_meta( '_wc_zap_shipment' );
