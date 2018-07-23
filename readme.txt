@@ -3,7 +3,7 @@ Contributors: idofri
 Tags: WooCommerce, zap, index, mirror site, XML
 Requires at least: 3.0
 Tested up to: 4.9
-Stable tag: 1.3.6
+Stable tag: 1.3.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,10 @@ This plugin is a FREE download.
 It is advisable to exclude and prevent the mirror site from being cached in any way. 
 
 == Changelog ==
+
+= 1.3.7 =
+* Added new XML node-attribute.
+* Minor restructuring.
 
 = 1.3.6 =
 * Raised chars limit for product name.

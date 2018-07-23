@@ -3,7 +3,7 @@
 Plugin Name: Woo Zap Mirror
 Plugin URI:  https://wordpress.org/plugins/woo-zap-mirror/
 Description: Creates a mirror site for Zap.
-Version:     1.3.6
+Version:     1.3.7
 Author:      Ido Friedlander
 Author URI:  https://profiles.wordpress.org/idofri/
 Text Domain: woo-zap-mirror
@@ -20,7 +20,7 @@ class WC_Zap_Mirror {
 	 * Woo Zap Mirror version.
 	 * @var string
 	 */
-	public $version = '1.3.6';
+	public $version = '1.3.7';
 	
 	/** The single instance of the class. */
 	protected static $_instance = null;
