@@ -5,7 +5,7 @@
  * Description: Creates a mirror site for Zap.
  * Version: 1.4
  * Author: Ido Friedlander
- * Author URI: https://profiles.wordpress.org/idofri/
+ * Author URI: https://profiles.wordpress.org/idofri
  * Text Domain: woo-zap-mirror
  *
  * WC requires at least: 3.0
