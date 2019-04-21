@@ -68,6 +68,9 @@ It is advisable to exclude and prevent the mirror site from being cached in any 
 
 == Changelog ==
 
+= 1.4 =
+* More restructuring.
+
 = 1.3.7 =
 * Added new XML node-attribute.
 * Minor restructuring.
