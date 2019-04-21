@@ -8,11 +8,6 @@ li.zap_options > a:before {
 	top: 3px;
 }
 
-#product_cat-all.tabs-panel {
-	width: 368px; 
-	padding: 10px 15px;
-}
-
 #product_cat-all.tabs-panel #product_catchecklist {
 	margin: 0;
 }

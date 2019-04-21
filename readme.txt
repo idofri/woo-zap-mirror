@@ -1,11 +1,12 @@
 === Woo Zap Mirror ===
 Contributors: idofri
 Tags: WooCommerce, zap, index, mirror site, XML
-Requires at least: 3.0
-Tested up to: 4.9
-Stable tag: 1.3.7
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Requires at least: 4.7
+Requires PHP: 5.6
+Tested up to: 5.1
+Stable tag: 1.4
+License: GPLv3
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Creates Zap Mirror site for WooCommerce.
 
