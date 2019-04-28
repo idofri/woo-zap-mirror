@@ -376,8 +376,12 @@ class WC_Zap_Mirror {
         if ( $attributes ) {
             $options['attributes'] = [
                 'name'    => __( 'Attributes', 'woo-zap-mirror' ),
-                'options' => wp_list_pluck( $attributes, 'attribute_label', 'attribute_name' )
+                'options' => []
             ];
+
+            foreach ( $attributes as $attribute ) {
+                $options['attributes']['options'][ 'attribute:' . $attribute->attribute_name ] = $attribute->attribute_label;
+            }
         }
 
         // Saved
@@ -389,7 +393,15 @@ class WC_Zap_Mirror {
             ];
 
             foreach ( $savedOptions as $savedOption ) {
+                // Skip
+                if ( isset( $options['attributes']['options'][ $savedOption ] ) ) {
+                    continue;
+                }
                 $options['saved']['options'][ $savedOption ] = $savedOption;
+            }
+
+            if ( empty( $options['saved']['options'] ) ) {
+                unset( $options['saved'] );
             }
         }
 
@@ -738,8 +750,9 @@ class WC_Zap_Mirror {
             $function = 'get_' . $attributes[ $key ];
             if ( is_callable( [ $product, $function ] ) ) {
                 $node->$key = $product->{$function}();
-            } elseif ( $attribute = $product->get_attribute( $attributes[ $key ] ) ) {
-                $node->$key = $attribute;
+            } elseif ( 'attribute:' === substr( $attributes[ $key ], 0, 10 ) ) {
+                $attribute = substr( $attributes[ $key ], 10 );
+                $node->$key = $product->get_attribute( $attribute );
             } else {
                 $node->$key = $attributes[ $key ];
             }
