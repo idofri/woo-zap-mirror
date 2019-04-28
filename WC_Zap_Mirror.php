@@ -308,89 +308,89 @@ class WC_Zap_Mirror {
     }
 
     public function getMappingOptions() {
-        $weight_unit    = get_option( 'woocommerce_weight_unit' );
-        $dimension_unit = get_option( 'woocommerce_dimension_unit' );
+        $weightUnit    = get_option( 'woocommerce_weight_unit' );
+        $dimensionUnit = get_option( 'woocommerce_dimension_unit' );
 
         $options = [
-            'id'                => __( 'ID', 'woocommerce' ),
-            'type'              => __( 'Type', 'woocommerce' ),
-            'sku'               => __( 'SKU', 'woocommerce' ),
-            'name'              => __( 'Name', 'woocommerce' ),
-            'short_description' => __( 'Short description', 'woocommerce' ),
-            'description'       => __( 'Description', 'woocommerce' ),
-            'product_url'       => __( 'External URL', 'woocommerce' ),
-            'purchase_note'     => __( 'Purchase note', 'woocommerce' ),
+            'id'                => __( 'ID', 'woo-zap-mirror' ),
+            'type'              => __( 'Type', 'woo-zap-mirror' ),
+            'sku'               => __( 'SKU', 'woo-zap-mirror' ),
+            'name'              => __( 'Name', 'woo-zap-mirror' ),
+            'short_description' => __( 'Short description', 'woo-zap-mirror' ),
+            'description'       => __( 'Description', 'woo-zap-mirror' ),
+            'product_url'       => __( 'External URL', 'woo-zap-mirror' ),
+            'purchase_note'     => __( 'Purchase note', 'woo-zap-mirror' ),
             'price'             => [
-                'name'    => __( 'Price', 'woocommerce' ),
+                'name'    => __( 'Price', 'woo-zap-mirror' ),
                 'options' => [
-                    'regular_price' => __( 'Regular price', 'woocommerce' ),
-                    'sale_price'    => __( 'Sale price', 'woocommerce' )
+                    'regular_price' => __( 'Regular price', 'woo-zap-mirror' ),
+                    'sale_price'    => __( 'Sale price', 'woo-zap-mirror' )
                 ]
             ],
             'tax'               => [
-                'name'    => __( 'Tax', 'woocommerce' ),
+                'name'    => __( 'Tax', 'woo-zap-mirror' ),
                 'options' => [
-                    'tax_status' => __( 'Tax status', 'woocommerce' ),
-                    'tax_class'  => __( 'Tax class', 'woocommerce' )
+                    'tax_status' => __( 'Tax status', 'woo-zap-mirror' ),
+                    'tax_class'  => __( 'Tax class', 'woo-zap-mirror' )
                 ]
             ],
             'stock'             => [
-                'name'    => __( 'Stock', 'woocommerce' ),
+                'name'    => __( 'Stock', 'woo-zap-mirror' ),
                 'options' => [
-                    'stock_status'   => __( 'In stock?', 'woocommerce' ),
-                    'stock_quantity' => _x( 'Stock', 'Quantity in stock', 'woocommerce' )
+                    'stock_status'   => __( 'In stock?', 'woo-zap-mirror' ),
+                    'stock_quantity' => _x( 'Stock', 'Quantity in stock', 'woo-zap-mirror' )
                 ]
             ],
             'dimensions'        => [
-                'name'    => __( 'Dimensions', 'woocommerce' ),
+                'name'    => __( 'Dimensions', 'woo-zap-mirror' ),
                 'options' => [
-                    'weight' => sprintf( __( 'Weight (%s)', 'woocommerce' ), $weight_unit ),
-                    'length' => sprintf( __( 'Length (%s)', 'woocommerce' ), $dimension_unit ),
-                    'width'  => sprintf( __( 'Width (%s)', 'woocommerce' ), $dimension_unit ),
-                    'height' => sprintf( __( 'Height (%s)', 'woocommerce' ), $dimension_unit )
-                ]
-            ],
-            'shipping'          => [
-                'name'    => __( 'Shipping', 'woocommerce' ),
-                'options' => [
-                    'shipping_class' => __( 'Shipping class', 'woocommerce' )
+                    'weight' => sprintf( __( 'Weight (%s)', 'woo-zap-mirror' ), $weightUnit ),
+                    'length' => sprintf( __( 'Length (%s)', 'woo-zap-mirror' ), $dimensionUnit ),
+                    'width'  => sprintf( __( 'Width (%s)', 'woo-zap-mirror' ), $dimensionUnit ),
+                    'height' => sprintf( __( 'Height (%s)', 'woo-zap-mirror' ), $dimensionUnit )
                 ]
             ]
         ];
 
-        // Shipping
-        $shipping = WC()->shipping->get_shipping_methods();
-        if ( $shipping ) {
-            $options['shipping'] = [
-                'name'    => __( 'Shipping', 'woocommerce' ),
-                'options' => []
-            ];
-            foreach ( $shipping as $method ) {
-                echo '<pre>';
-                    print_r(WC()->shipping);
-                    
-                    exit;
-                foreach ( $method->rates as $key => $val ) {
-                    // $rate_table[$key]= $val;
+        // @todo: shipping?
+        // $zones = WC_Shipping_Zones::get_zones();
+        // foreach ( $zones as $zone ) {
+        //     // Skip
+        //     if ( empty( $zone['shipping_methods'] ) ) {
+        //         continue;
+        //     }
 
-                    
-                }
-            }
-        }
-        foreach($shippingMethods as $shipping_method){
+        //     $shippingZone = 'shipping:' . $zone['id'];
+        //     $options[ $shippingZone ] = [
+        //         'name'    => sprintf( __( 'Shipping (%s)', 'woo-zap-mirror' ), $zone['zone_name'] ),
+        //         'options' => []
+        //     ];
             
-            foreach($shipping_method->rates as $key=>$val){		 
-                    $rate_table[$key]= $val;
-            }	
-        }
+        //     foreach ( $zone['shipping_methods'] as $shippingMethod ) {
+        //         $options[ $shippingZone ]['options'][ 'shipping:' . $shippingMethod->get_instance_id() ] = $shippingMethod->get_title();
+        //     }
+        // }
 
         // Attributes
         $attributes = wc_get_attribute_taxonomies();
         if ( $attributes ) {
             $options['attributes'] = [
-                'name'    => __( 'Attributes', 'woocommerce' ),
+                'name'    => __( 'Attributes', 'woo-zap-mirror' ),
                 'options' => wp_list_pluck( $attributes, 'attribute_label', 'attribute_name' )
             ];
+        }
+
+        // Saved
+        $savedOptions  = array_filter( $this->getDefaultAttributes() );
+        if ( $savedOptions ) {
+            $options['saved'] = [
+                'name'    => __( 'Saved Options', 'woo-zap-mirror' ),
+                'options' => []
+            ];
+
+            foreach ( $savedOptions as $savedOption ) {
+                $options['saved']['options'][ $savedOption ] = $savedOption;
+            }
         }
 
         return $options;
@@ -427,13 +427,14 @@ class WC_Zap_Mirror {
             [
                 'title' => __( 'Default Settings', 'woo-zap-mirror' ),
                 'id'    => 'wc_zap_mirror_default_attributes',
-                'type'  => 'title'
+                'type'  => 'title',
+                'desc'  => __( 'Select an existing option or type your own.', 'woo-zap-mirror' )
             ],
             [
                 'title'    => __( 'Product Name', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[PRODUCT_NAME]',
                 'type'     => 'mapping',
-                'class'    => '',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -441,6 +442,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Product Model', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[MODEL]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -448,6 +450,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Product Catalog Number', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[CATALOG_NUMBER]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -455,6 +458,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Product Code', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[PRODUCTCODE]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -462,6 +466,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Price', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[PRICE]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -469,6 +474,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Shipping Costs', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[SHIPMENT_COST]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -476,6 +482,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Delivery Time', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[DELIVERY_TIME]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -483,6 +490,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Manufacturer', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[MANUFACTURER]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -490,6 +498,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Warranty', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[WARRANTY]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -497,6 +506,7 @@ class WC_Zap_Mirror {
                 'title'    => __( 'Product Description', 'woo-zap-mirror' ),
                 'id'       => 'wc_zap_mirror_default_attributes[DETAILS]',
                 'type'     => 'mapping',
+                'class'    => 'wc-enhanced-select-nostd',
                 'default'  => '',
                 'options'  => $this->getMappingOptions()
             ],
@@ -519,8 +529,8 @@ class WC_Zap_Mirror {
                 <label><?php echo esc_html( $value['title'] ); ?> <?php echo $tooltip_html; // WPCS: XSS ok. ?></label>
             </th>
             <td class="forminp">
-                <select name="<?php echo esc_attr( $value['id'] ); ?>" class="<?php echo esc_attr( $value['class'] ); ?>" style="<?php echo esc_attr( $value['css'] ); ?>">
-                <option value=""><?php _e( '&mdash;' ); ?></option><?
+                <select name="<?php echo esc_attr( $value['id'] ); ?>" class="<?php echo esc_attr( $value['class'] ); ?>" style="<?php echo esc_attr( $value['css'] ); ?>" data-placeholder="<?php esc_attr_e( 'Select Option', 'woo-zap-mirror' ); ?>" data-tags="true">
+                <option value=""></option><?
 
                 foreach ( $value['options'] as $key => $val ) {
                     if ( is_array( $val ) ) {
@@ -682,7 +692,6 @@ class WC_Zap_Mirror {
 
         foreach ( $products->posts as $post ) {
             $product = wc_get_product( $post->ID );
-            $productCode = $product->get_meta( '_wc_zap_productcode' );
             $node = $parent->addchild( 'PRODUCT' );
             $node->addAttribute( 'NUM', $product->get_id() );
             $node->PRODUCT_URL    = wp_get_shortlink( $post->ID );
@@ -690,7 +699,7 @@ class WC_Zap_Mirror {
             $node->MODEL          = $product->get_meta( '_wc_zap_product_model' );
             $node->DETAILS        = $product->get_meta( '_wc_zap_product_description' );
             $node->CATALOG_NUMBER = $product->get_meta( '_wc_zap_product_catalog_number' );
-            $node->PRODUCTCODE    = $productCode ? $productCode : $product->get_id();
+            $node->PRODUCTCODE    = $product->get_meta( '_wc_zap_productcode' );
             $node->CURRENCY       = 'ILS';
             $node->PRICE          = $product->get_meta( '_wc_zap_product_price' );
             $node->SHIPMENT_COST  = $product->get_meta( '_wc_zap_shipment' );
@@ -729,8 +738,10 @@ class WC_Zap_Mirror {
             $function = 'get_' . $attributes[ $key ];
             if ( is_callable( [ $product, $function ] ) ) {
                 $node->$key = $product->{$function}();
-            } elseif ( $product->has_attributes() ) {
-                $node->$key = $product->get_attribute( $attributes[ $key ] );
+            } elseif ( $attribute = $product->get_attribute( $attributes[ $key ] ) ) {
+                $node->$key = $attribute;
+            } else {
+                $node->$key = $attributes[ $key ];
             }
         }
     }
