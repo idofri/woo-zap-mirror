@@ -542,7 +542,7 @@ class WC_Zap_Mirror {
             </th>
             <td class="forminp">
                 <select name="<?php echo esc_attr( $value['id'] ); ?>" class="<?php echo esc_attr( $value['class'] ); ?>" style="<?php echo esc_attr( $value['css'] ); ?>" data-placeholder="<?php esc_attr_e( 'Select Option', 'woo-zap-mirror' ); ?>" data-tags="true">
-                <option value=""></option><?
+                <option value=""></option><?php
 
                 foreach ( $value['options'] as $key => $val ) {
                     if ( is_array( $val ) ) {
