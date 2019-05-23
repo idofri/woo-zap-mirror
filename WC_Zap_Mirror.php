@@ -47,7 +47,7 @@ class WC_Zap_Mirror {
         add_action( 'woocommerce_process_product_meta',      [ $this, 'updateProductMeta' ] );
         add_filter( 'woocommerce_settings_tabs_array',       [ $this, 'addSettingsTab' ], 25 );
         add_filter( 'query_vars',                            [ $this, 'addCustomQueryVar' ] );
-        add_filter( 'template_include',                      [ $this, 'renderMirrorPage' ], 0 );
+        add_filter( 'template_include',                      [ $this, 'renderMirrorPage' ], 9999999 );
     }
 
     public function checkEnvironment() {
