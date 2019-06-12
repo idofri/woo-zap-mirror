@@ -706,7 +706,7 @@ class WC_Zap_Mirror {
             $product = wc_get_product( $post->ID );
             $node = $parent->addchild( 'PRODUCT' );
             $node->addAttribute( 'NUM', $product->get_id() );
-            $node->PRODUCT_URL    = wp_get_shortlink( $post->ID );
+            $node->PRODUCT_URL    = $product->get_permalink();
             $node->PRODUCT_NAME   = $product->get_meta( '_wc_zap_product_name' );
             $node->MODEL          = $product->get_meta( '_wc_zap_product_model' );
             $node->DETAILS        = $product->get_meta( '_wc_zap_product_description' );
