@@ -385,7 +385,7 @@ class WC_Zap_Mirror {
         }
 
         // Saved
-        $savedOptions  = array_filter( $this->getDefaultAttributes() );
+        $savedOptions  = array_filter( $this->getDefaultAttributes(), 'strlen' );
         if ( $savedOptions ) {
             $options['saved'] = [
                 'name'    => __( 'Saved Options', 'woo-zap-mirror' ),
