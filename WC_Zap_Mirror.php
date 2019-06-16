@@ -365,7 +365,7 @@ class WC_Zap_Mirror {
         //         'name'    => sprintf( __( 'Shipping (%s)', 'woo-zap-mirror' ), $zone['zone_name'] ),
         //         'options' => []
         //     ];
-            
+
         //     foreach ( $zone['shipping_methods'] as $shippingMethod ) {
         //         $options[ $shippingZone ]['options'][ 'shipping:' . $shippingMethod->get_instance_id() ] = $shippingMethod->get_title();
         //     }
@@ -743,10 +743,10 @@ class WC_Zap_Mirror {
     public function alterEmptyNodes( $node, $product ) {
         $attributes = $this->getDefaultAttributes();
         foreach ( $node as $key => $value ) {
-            if ( ! empty( $value ) || empty( $attributes[ $key ] ) ) {
+            if ( ! empty( $value ) || ! strlen( $attributes[ $key ] ) ) {
                 continue;
             }
-            
+
             $function = 'get_' . $attributes[ $key ];
             if ( is_callable( [ $product, $function ] ) ) {
                 $node->$key = $product->{$function}();
