@@ -743,7 +743,7 @@ class WC_Zap_Mirror {
     public function alterEmptyNodes( $node, $product ) {
         $attributes = $this->getDefaultAttributes();
         foreach ( $node as $key => $value ) {
-            if ( ! empty( $value ) || ! strlen( $attributes[ $key ] ) ) {
+            if ( $value != '' || ! strlen( $attributes[ $key ] ) ) {
                 continue;
             }
 
