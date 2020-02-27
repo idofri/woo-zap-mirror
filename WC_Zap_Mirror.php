@@ -689,9 +689,6 @@ class WC_Zap_Mirror {
 
     public function renderXmlTemplate( $term_id ) {
         $products = $this->getProductsByTerm( $term_id );
-        if ( ! $products->have_posts() ) {
-            wp_die( __( 'No available products.', 'woo-zap-mirror' ) );
-        }
 
         // Xml headers
         header( "Content-Type: application/xml; charset=utf-8" );
