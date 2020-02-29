@@ -3,13 +3,13 @@
  * Plugin Name: Woo Zap Mirror
  * Plugin URI: https://wordpress.org/plugins/woo-zap-mirror/
  * Description: Creates a mirror site for Zap.
- * Version: 1.4.5
+ * Version: 1.4.6
  * Author: Ido Friedlander
  * Author URI: https://profiles.wordpress.org/idofri
  * Text Domain: woo-zap-mirror
  *
  * WC requires at least: 3.0
- * WC tested up to: 3.6
+ * WC tested up to: 3.9
  */
 
 // Exit if accessed directly
@@ -22,7 +22,7 @@ class WC_Zap_Mirror {
 
     protected $notices = [];
 
-    public $version = '1.4.5';
+    public $version = '1.4.6';
 
     public static function instance() {
         if ( is_null( self::$instance ) ) {

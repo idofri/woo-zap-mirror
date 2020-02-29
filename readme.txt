@@ -4,7 +4,7 @@ Tags: WooCommerce, zap, index, mirror site, XML
 Requires at least: 4.7
 Requires PHP: 5.6
 Tested up to: 5.2
-Stable tag: 1.4.5
+Stable tag: 1.4.6
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -67,6 +67,10 @@ This plugin is a FREE download.
 It is advisable to exclude and prevent the mirror site from being cached in any way. 
 
 == Changelog ==
+
+= 1.4.6 =
+* Fixed empty var condition for default attributes.
+* Show empty XML even when no products are present.
 
 = 1.4.5 =
 * Allow zeros in saved options.
